@@ -1,4 +1,6 @@
-module.exports = async function breadcrumbs (req, res, next) {
+import liquid from '../../lib/render-content/liquid.js'
+
+export default async function breadcrumbs(req, res, next) {
   if (!req.context.page) return next()
   if (req.context.page.hidden) return next()
 
@@ -9,36 +11,50 @@ module.exports = async function breadcrumbs (req, res, next) {
     return next()
   }
 
-  const currentSiteTree = req.context.siteTree[req.context.currentLanguage][req.context.currentVersion]
-
-  await createBreadcrumb(
-    // Array of child pages on the root, i.e., the product level.
-    currentSiteTree.childPages,
-    req.context
-  )
+  req.context.breadcrumbs = await getBreadcrumbs(req)
 
   return next()
 }
 
-async function createBreadcrumb (pageArray, context) {
-  // Find each page in the siteTree's array of child pages that starts with the requested path.
-  let childPage = pageArray.find(page => context.currentPath.startsWith(page.href))
-
-  // Fall back to English if needed
-  if (!childPage) {
-    childPage = pageArray.find(page => context.currentPath.startsWith(page.href.replace(`/${context.currentLanguage}`, '/en')))
-    if (!childPage) return
+async function getBreadcrumbs(req) {
+  const crumbs = []
+  const { currentPath, currentVersion } = req.context
+  const split = currentPath.split('/')
+  while (split.length > 2 && split[split.length - 1] !== currentVersion) {
+    const href = split.join('/')
+    const page = req.context.pages[href]
+    if (page) {
+      crumbs.push({
+        href,
+        title: await getShortTitle(page, req.context),
+      })
+    } else {
+      console.warn(`No page found with for '${href}'`)
+    }
+    split.pop()
   }
+  crumbs.reverse()
 
-  context.breadcrumbs.push({
-    documentType: childPage.page.documentType,
-    href: childPage.href,
-    title: childPage.renderedShortTitle || childPage.renderedFullTitle
-  })
+  return crumbs
+}
 
-  // Recursively loop through the siteTree and create each breadcrumb, until we reach the
-  // point where the current siteTree page is the same as the requested page. Then stop.
-  if (childPage.childPages && context.currentPath !== childPage.href) {
-    createBreadcrumb(childPage.childPages, context)
+async function getShortTitle(page, context) {
+  // Note! Don't use `page.title` or `page.shortTitle` because if they get
+  // set during rendering, they become the HTML entities encoded string.
+  // E.g. "Delete &amp; restore a package"
+
+  if (page.rawShortTitle) {
+    if (page.rawShortTitle.includes('{')) {
+      // Can't easily cache this because the `page` is reused for multiple
+      // permalinks. We could do what the `Page.render()` method does which
+      // specifically caches based on the `context.currentPath` but at
+      // this point it's probably not worth it.
+      return await liquid.parseAndRender(page.rawShortTitle, context)
+    }
+    return page.rawShortTitle
   }
+  if (page.rawTitle.includes('{')) {
+    return await liquid.parseAndRender(page.rawTitle, context)
+  }
+  return page.rawTitle
 }

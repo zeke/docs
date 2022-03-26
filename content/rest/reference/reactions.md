@@ -7,15 +7,12 @@ versions:
   fpt: '*'
   ghes: '*'
   ghae: '*'
+  ghec: '*'
 topics:
   - API
 miniTocMaxHeadingLevel: 3
 ---
 
-### Reaction types
-
-When creating a reaction, the allowed values for the `content` parameter are as follows (with the corresponding emoji for reference):
-
-{% data reusables.repositories.reaction_list %}
-
-{% include rest_operations_at_current_path %}
+<!--
+  Operations are automatically generated. Markdown for this page is located in data/reusables/rest-reference/reactions
+-->

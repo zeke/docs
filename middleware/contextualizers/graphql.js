@@ -1,18 +1,26 @@
-const fs = require('fs')
-const path = require('path')
-const readJsonFile = require('../../lib/read-json-file')
-const previews = readJsonFile('./lib/graphql/static/previews.json')
-const upcomingChanges = readJsonFile('./lib/graphql/static/upcoming-changes.json')
-const changelog = readJsonFile('./lib/graphql/static/changelog.json')
-const prerenderedObjects = readJsonFile('./lib/graphql/static/prerendered-objects.json')
-const prerenderedInputObjects = readJsonFile('./lib/graphql/static/prerendered-input-objects.json')
-const allVersions = require('../../lib/all-versions')
+import { readCompressedJsonFileFallbackLazily } from '../../lib/read-json-file.js'
+import { allVersions } from '../../lib/all-versions.js'
+const previews = readCompressedJsonFileFallbackLazily('./lib/graphql/static/previews.json')
+const upcomingChanges = readCompressedJsonFileFallbackLazily(
+  './lib/graphql/static/upcoming-changes.json'
+)
+const changelog = readCompressedJsonFileFallbackLazily('./lib/graphql/static/changelog.json')
+const prerenderedObjects = readCompressedJsonFileFallbackLazily(
+  './lib/graphql/static/prerendered-objects.json'
+)
+const prerenderedInputObjects = readCompressedJsonFileFallbackLazily(
+  './lib/graphql/static/prerendered-input-objects.json'
+)
+const prerenderedMutations = readCompressedJsonFileFallbackLazily(
+  './lib/graphql/static/prerendered-mutations.json'
+)
 
-const explorerUrl = process.env.NODE_ENV === 'production'
-  ? 'https://graphql.github.com/explorer'
-  : 'http://localhost:3000'
+const explorerUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'https://graphql.github.com/explorer'
+    : 'http://localhost:3000'
 
-module.exports = function graphqlContext (req, res, next) {
+export default function graphqlContext(req, res, next) {
   const currentVersionObj = allVersions[req.context.currentVersion]
   // ignore requests to non-GraphQL reference paths
   // and to versions that don't exist
@@ -26,13 +34,16 @@ module.exports = function graphqlContext (req, res, next) {
   const graphqlVersion = currentVersionObj.miscVersionName
 
   req.context.graphql = {
-    schemaForCurrentVersion: JSON.parse(fs.readFileSync(path.join(process.cwd(), `lib/graphql/static/schema-${graphqlVersion}.json`))),
-    previewsForCurrentVersion: previews[graphqlVersion],
-    upcomingChangesForCurrentVersion: upcomingChanges[graphqlVersion],
-    prerenderedObjectsForCurrentVersion: prerenderedObjects[graphqlVersion],
-    prerenderedInputObjectsForCurrentVersion: prerenderedInputObjects[graphqlVersion],
+    schemaForCurrentVersion: readCompressedJsonFileFallbackLazily(
+      `lib/graphql/static/schema-${graphqlVersion}.json`
+    )(),
+    previewsForCurrentVersion: previews()[graphqlVersion],
+    upcomingChangesForCurrentVersion: upcomingChanges()[graphqlVersion],
+    prerenderedObjectsForCurrentVersion: prerenderedObjects()[graphqlVersion],
+    prerenderedInputObjectsForCurrentVersion: prerenderedInputObjects()[graphqlVersion],
+    prerenderedMutationsForCurrentVersion: prerenderedMutations()[graphqlVersion],
     explorerUrl,
-    changelog
+    changelog: changelog(),
   }
 
   return next()

@@ -1,15 +1,15 @@
 ---
 title: Cobrança
+intro: 'Com a API de cobrança você pode monitorar as cobranças e uso {% data variables.product.prodname_actions %} e {% data variables.product.prodname_registry %} para um usuário ou organização.'
 versions:
-  free-pro-team: '*'
+  fpt: '*'
+  ghec: '*'
+  ghes: '>=3.4'
 topics:
   - API
+miniTocMaxHeadingLevel: 3
 ---
 
-Você pode monitorar suas cobranças e uso de {% data variables.product.prodname_actions %} e de {% data variables.product.prodname_registry %} para um usuário e organização através da API de cobrança.
-
-Você pode obter informações de cobrança para uma empresa. Para obter mais informações, consulte a API REST "[{% data variables.product.prodname_dotcom %} administração de Enterprise](/rest/reference/enterprise-admin#billing)".
-
-{% for operation in currentRestOperations %}
-  {% unless operation.subcategory %}{% include rest_operation %}{% endunless %}
-{% endfor %}
+<!--
+  Operations are automatically generated. Markdown for this page is located in data/reusables/rest-reference/billing
+-->

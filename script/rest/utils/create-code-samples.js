@@ -1,41 +1,53 @@
-module.exports = createCodeSamples
-
-const urlTemplate = require('url-template')
-const { stringify } = require('javascript-stringify')
-const { get, mapValues, snakeCase } = require('lodash')
+#!/usr/bin/env node
+import { parseTemplate } from 'url-template'
+import { stringify } from 'javascript-stringify'
+import { get, mapValues, snakeCase } from 'lodash-es'
+export default createCodeSamples
 
 const PARAMETER_EXAMPLES = {
   owner: 'octocat',
   repo: 'hello-world',
   email: 'octocat@github.com',
-  emails: ['octocat@github.com']
+  emails: ['octocat@github.com'],
 }
 
-function createCodeSamples (operation) {
+function createCodeSamples(operation) {
   const route = {
     method: operation.verb.toUpperCase(),
     path: operation.requestPath,
-    operation
+    operation,
   }
   const serverUrl = operation.serverUrl
 
   const codeSampleParams = { route, serverUrl }
+
+  if (
+    operation.operationId === 'repos/upload-release-asset' &&
+    Object.prototype.hasOwnProperty.call(operation, 'servers') &&
+    serverUrl === 'https://api.github.com'
+  ) {
+    codeSampleParams.serverUrl = operation.servers[0].variables.origin.default
+  } else if (operation.subcategory && operation.subcategory === 'management-console') {
+    codeSampleParams.serverUrl = serverUrl.replace('/api/v3', '')
+  }
+
   return [
     { lang: 'Shell', source: toShellExample(codeSampleParams) },
-    { lang: 'JavaScript', source: toJsExample(codeSampleParams) }
+    { lang: 'JavaScript', source: toJsExample(codeSampleParams) },
   ]
 }
 
-function toShellExample ({ route, serverUrl }) {
+function toShellExample({ route, serverUrl }) {
   const pathParams = mapValues(getExamplePathParams(route), (value, paramName) =>
     PARAMETER_EXAMPLES[paramName] ? value : snakeCase(value).toUpperCase()
   )
-  const path = urlTemplate.parse(route.path.replace(/:(\w+)/g, '{$1}')).expand(pathParams)
+  const path = parseTemplate(route.path.replace(/:(\w+)/g, '{$1}')).expand(pathParams)
   const params = getExampleBodyParams(route)
   const { method } = route
 
-  const requiredPreview = get(route, 'operation.x-github.previews', [])
-    .find(preview => preview.required)
+  const requiredPreview = get(route, 'operation.x-github.previews', []).find(
+    (preview) => preview.required
+  )
 
   const defaultAcceptHeader = requiredPreview
     ? `application/vnd.github.${requiredPreview.name}-preview+json`
@@ -47,7 +59,7 @@ function toShellExample ({ route, serverUrl }) {
   if (route.operation.contentType === 'application/x-www-form-urlencoded') {
     requestBodyParams = ''
     const paramNames = Object.keys(params)
-    paramNames.forEach(elem => {
+    paramNames.forEach((elem) => {
       requestBodyParams = `${requestBodyParams} --data-urlencode ${elem}=${params[elem]}`
     })
     requestBodyParams = requestBodyParams.trim()
@@ -57,20 +69,20 @@ function toShellExample ({ route, serverUrl }) {
     method !== 'GET' && `-X ${method}`,
     defaultAcceptHeader ? `-H "Accept: ${defaultAcceptHeader}"` : '',
     `${serverUrl}${path}`,
-    Object.keys(params).length && requestBodyParams
+    Object.keys(params).length && requestBodyParams,
   ].filter(Boolean)
   return `curl \\\n  ${args.join(' \\\n  ')}`
 }
 
-function toJsExample ({ route }) {
+function toJsExample({ route }) {
   const params = route.operation.parameters
-    .filter(param => !param.deprecated)
-    .filter(param => param.in !== 'header')
-    .filter(param => param.required)
+    .filter((param) => !param.deprecated)
+    .filter((param) => param.in !== 'header')
+    .filter((param) => param.required)
     .reduce(
       (_params, param) =>
         Object.assign(_params, {
-          [param.name]: getExampleParamValue(param.name, param.schema)
+          [param.name]: getExampleParamValue(param.name, param.schema),
         }),
       {}
     )
@@ -78,23 +90,23 @@ function toJsExample ({ route }) {
 
   // add any required preview headers to the params object
   const requiredPreviewNames = get(route.operation, 'x-github.previews', [])
-    .filter(preview => preview.required)
-    .map(preview => preview.name)
+    .filter((preview) => preview.required)
+    .map((preview) => preview.name)
 
   if (requiredPreviewNames.length) {
     Object.assign(params, {
-      mediaType: { previews: requiredPreviewNames }
+      mediaType: { previews: requiredPreviewNames },
     })
   }
 
   // add required content type header (presently only for `POST /markdown/raw`)
-  const contentTypeHeader = route.operation.parameters.find(param => {
+  const contentTypeHeader = route.operation.parameters.find((param) => {
     return param.name.toLowerCase() === 'content-type' && get(param, 'schema.enum')
   })
 
   if (contentTypeHeader) {
     Object.assign(params, {
-      headers: { 'content-type': contentTypeHeader.schema.enum[0] }
+      headers: { 'content-type': contentTypeHeader.schema.enum[0] },
     })
   }
 
@@ -102,8 +114,8 @@ function toJsExample ({ route }) {
   return `await octokit.request('${route.method} ${route.path}'${args})`
 }
 
-function getExamplePathParams ({ operation }) {
-  const pathParams = operation.parameters.filter(param => param.in === 'path')
+function getExamplePathParams({ operation }) {
+  const pathParams = operation.parameters.filter((param) => param.in === 'path')
   if (pathParams.length === 0) {
     return {}
   }
@@ -113,7 +125,7 @@ function getExamplePathParams ({ operation }) {
   }, {})
 }
 
-function getExampleBodyParams ({ operation }) {
+function getExampleBodyParams({ operation }) {
   const contentType = Object.keys(get(operation, 'requestBody.content', []))[0]
   let schema
   try {
@@ -148,7 +160,7 @@ function getExampleBodyParams ({ operation }) {
   }, {})
 }
 
-function getExampleParamValue (name, schema) {
+function getExampleParamValue(name, schema) {
   const value = PARAMETER_EXAMPLES[name]
   if (value) {
     return value
@@ -157,20 +169,18 @@ function getExampleParamValue (name, schema) {
   // TODO: figure out the right behavior here
   if (schema.oneOf && schema.oneOf[0].type) return getExampleParamValue(name, schema.oneOf[0])
   if (schema.anyOf && schema.anyOf[0].type) return getExampleParamValue(name, schema.anyOf[0])
+  if (!schema.type) return 'any'
 
-  switch (schema.type) {
-    case 'string':
-      return name
-    case 'boolean':
-      return true
-    case 'integer':
-      return 42
-    case 'object':
-      return mapValues(schema.properties, (propSchema, propName) =>
-        getExampleParamValue(propName, propSchema)
-      )
-    case 'array':
-      return [getExampleParamValue(name, schema.items)]
+  if (schema.type.includes('string')) return name
+  else if (schema.type.includes('boolean')) return true
+  else if (schema.type.includes('integer')) return 42
+  else if (schema.type.includes('object')) {
+    return mapValues(schema.properties, (propSchema, propName) =>
+      getExampleParamValue(propName, propSchema)
+    )
+  } else if (schema.type.includes('array')) {
+    return [getExampleParamValue(name, schema.items)]
   }
+
   throw new Error(`Unknown data type in schema:, ${JSON.stringify(schema, null, 2)}`)
 }

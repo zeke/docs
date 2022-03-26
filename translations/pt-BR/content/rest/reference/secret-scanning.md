@@ -1,12 +1,14 @@
 ---
 title: Varredura secreta
+intro: Use a API a digitalização de segredo para recuperar e atualizar alertas de segredos de um repositório.
 versions:
-  free-pro-team: '*'
-  enterprise-server: '>=3.1'
+  fpt: '*'
+  ghes: '*'
+  ghec: '*'
+  ghae: '*'
+miniTocMaxHeadingLevel: 3
 ---
 
-{% data reusables.secret-scanning.api-beta %}
-
-The {% data variables.product.prodname_secret_scanning %} API lets you retrieve and update secret scanning alerts from a {% if currentVersion == "free-pro-team@latest" %}private {% endif %}repository. For more information on secret scanning, see "[About secret scanning](/code-security/secret-security/about-secret-scanning)."
-
-{% include rest_operations_at_current_path %}
+<!--
+  Operations are automatically generated. Markdown for this page is located in data/reusables/rest-reference/secret-scanning
+-->

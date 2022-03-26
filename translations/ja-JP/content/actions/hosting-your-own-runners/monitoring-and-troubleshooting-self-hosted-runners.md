@@ -1,68 +1,128 @@
 ---
-title: セルフホストランナーのモニタリングとトラブルシューティング
-intro: セルフホストランナーをモニターして、その活動を見て、一般的な問題を診断できます。
+title: Monitoring and troubleshooting self-hosted runners
+intro: You can monitor your self-hosted runners to view their activity and diagnose common issues.
 redirect_from:
   - /actions/hosting-your-own-runners/checking-the-status-of-self-hosted-runners
   - /github/automating-your-workflow-with-github-actions/checking-the-status-of-self-hosted-runners
   - /actions/automating-your-workflow-with-github-actions/checking-the-status-of-self-hosted-runners
 versions:
-  free-pro-team: '*'
-  enterprise-server: '>=2.22'
-  github-ae: '*'
+  fpt: '*'
+  ghes: '*'
+  ghae: '*'
+  ghec: '*'
 type: tutorial
 defaultPlatform: linux
+shortTitle: Monitor & troubleshoot
 ---
 
-{% data reusables.actions.ae-self-hosted-runners-notice %}
 {% data reusables.actions.enterprise-beta %}
 {% data reusables.actions.enterprise-github-hosted-runners %}
-{% data reusables.actions.ae-beta %}
 
-### {{ site.data.variables.product.prodname_dotcom }}を使ったセルフホストランナーのステータスのチェック
+## Checking the status of a self-hosted runner
 
-{% data reusables.github-actions.self-hosted-runner-management-permissions-required %}
+{% data reusables.actions.self-hosted-runner-management-permissions-required %}
 
-{% data reusables.github-actions.self-hosted-runner-navigate-repo-and-org %}
-{% data reusables.github-actions.settings-sidebar-actions-runners %}
-1. {% if currentVersion == "free-pro-team@latest" %}[Runners]{% else %}[Self-hosted runners]{% endif %} で、ランナーの名前、ラベル、ステータスなど、登録済みのランナーのリストを表示できます。
+{% data reusables.actions.self-hosted-runner-navigate-repo-and-org %}
+{% data reusables.actions.settings-sidebar-actions-runners %}
+1. Under {% ifversion fpt or ghes > 3.1 or ghae or ghec %}"Runners"{% else %}"Self-hosted runners"{% endif %}, you can view a list of registered runners, including the runner's name, labels, and status.
 
-    ![ランナーのリスト](/assets/images/help/settings/actions-runner-list.png)
+    The status can be one of the following:
 
-    ステータスは以下のいずれかです。
+    * **Idle**: The runner is connected to {% data variables.product.product_name %} and is ready to execute jobs.
+    * **Active**: The runner is currently executing a job.
+    * **Offline**: The runner is not connected to {% data variables.product.product_name %}. This could be because the machine is offline, the self-hosted runner application is not running on the machine, or the self-hosted runner application cannot communicate with {% data variables.product.product_name %}.
 
-    * **Idle**: ランナーは{% data variables.product.product_name %}に接続されており、ジョブを実行する準備ができています。
-    * **Active**: ランナーは現在ジョブを実行しています。
-    * **Offline**: ランナーは{% data variables.product.product_name %}に接続されていません。 これは、マシンがオフラインになっているか、マシン上でセルフホストランナーアプリケーションが動作していないか、セルフホストランナーアプリケーションが{% data variables.product.product_name %}と通信できていないかです。
+## Troubleshooting network connectivity
 
+### Checking self-hosted runner network connectivity
 
-### セルフホストランナーアプリケーションのログファイルのレビュー
+You can use the self-hosted runner application's `run` script with the `--check` parameter to check that a self-hosted runner can access all required network services on {% data variables.product.product_location %}.
 
-セルフホストランナーアプリケーションのステータスと、そのアクティビティをモニタリングできます。 ログファイルは`_diag`ディレクトリに保存されており、アプリケーションが起動されるたびに新しいログが生成されます。 ファイル名は*Runner_*で始まり、その後にアプリケーションが起動された時刻のUTCタイムスタンプが続きます。
+In addition to `--check`, you must provide two arguments to the script:
 
-ワークフロージョブの実行に関する詳細なログについては、*Worker_*ファイルについて述べた次のセクションを参照してください。
+* `--url` with the URL to your {% data variables.product.company_short %} repository, organization, or enterprise. For example, `--url https://github.com/octo-org/octo-repo`.
+* `--pat` with the value of a personal access token, which must have the `workflow` scope. For example, `--pat ghp_abcd1234`. For more information, see "[Creating a personal access token](/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)."
 
-### ジョブのログファイルのレビュー
+For example:
 
-セルフホストランナーアプリケーションは、処理するジョブごとに詳細なログファイルを生成します。 これらのファイルは`_diag`ディレクトリに保存され、ファイル名は*Worker_*で始まります。
+{% mac %}
+
+{% data reusables.actions.self-hosted-runner-check-mac-linux %}
+
+{% endmac %}
+{% linux %}
+
+{% data reusables.actions.self-hosted-runner-check-mac-linux %}
+
+{% endlinux %}
+{% windows %}
+
+```shell
+run.cmd --check --url <em>https://github.com/octo-org/octo-repo</em> --pat <em>ghp_abcd1234</em>
+```
+
+{% endwindows %}
+
+The script tests each service, and outputs either a `PASS` or `FAIL` for each one. If you have any failing checks, you can see more details on the problem in the log file for the check. The log files are located in the `_diag` directory where you installed the runner application, and the path of the log file for each check is shown in the console output of the script.
+
+If you have any failing checks, you should also verify that your self-hosted runner machine meets all the communication requirements. For more information, see "[About self-hosted runners](/actions/hosting-your-own-runners/about-self-hosted-runners#communication-requirements)."
+
+### Disabling TLS certificate verification
+{% ifversion ghes %}
+By default, the self-hosted runner application verifies the TLS certificate for {% data variables.product.product_name %}.  If your {% data variables.product.product_name %} has a self-signed or internally-issued certificate, you may wish to disable TLS certificate verification for testing purposes.
+{% else %}
+By default, the self-hosted runner application verifies the TLS certificate for {% data variables.product.product_name %}.  If you encounter network problems, you may wish to disable TLS certificate verification for testing purposes.
+{% endif %}
+
+To disable TLS certification verification in the self-hosted runner application, set the `GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY` environment variable to `1` before configuring and running the self-hosted runner application.
+
+```shell
+export GITHUB_ACTIONS_RUNNER_TLS_NO_VERIFY=1
+./config.sh --url <em>https://github.com/octo-org/octo-repo</em> --token
+./run.sh
+```
+
+{% warning %}
+
+**Warning**: Disabling TLS verification is not recommended since TLS provides privacy and data integrity between the self-hosted runner application and {% data variables.product.product_name %}. We recommend that you install the {% data variables.product.product_name %} certificate in the operating system certificate store for your self-hosted runner. For guidance on how to install the {% data variables.product.product_name %} certificate, check with your operating system vendor.
+
+{% endwarning %}
+
+## Reviewing the self-hosted runner application log files
+
+You can monitor the status of the self-hosted runner application and its activities. Log files are kept in the `_diag` directory where you installed the runner application, and a new log is generated each time the application is started. The filename begins with *Runner_*, and is followed by a UTC timestamp of when the application was started.
+
+For detailed logs on workflow job executions, see the next section describing the *Worker_* files.
+
+## Reviewing a job's log file
+
+The self-hosted runner application creates a detailed log file for each job that it processes. These files are stored in the `_diag` directory where you installed the runner application, and the filename begins with *Worker_*.
 
 {% linux %}
 
-### journalctlを使ってのセルフホストランナーアプリケーションのチェック
+## Using journalctl to check the self-hosted runner application service
 
-サービスを利用してアプリケーションを実行しているLinuxベースのセルフホストランナーでは、リアルタイムのアクティビティをモニターするのに`journalctl`が使えます。 デフォルトのsystemdベースのサービスは、以下の命名規則を使います。 `actions.runner.<org>-<repo>.<runnerName>.service` この名前は80文字を超える場合には切り捨てられるので、サービス名を見つける方法としては_.service_ファイルをチェックするのが良いでしょう。 例:
+For Linux-based self-hosted runners running the application using a service, you can use `journalctl` to monitor their real-time activity. The default systemd-based service uses the following naming convention: `actions.runner.<org>-<repo>.<runnerName>.service`. This name is truncated if it exceeds 80 characters, so the preferred way of finding the service's name is by checking the _.service_ file. For example:
 
 ```shell
 $ cat ~/actions-runner/.service
 actions.runner.octo-org-octo-repo.runner01.service
 ```
 
-`journalctl`を使って、セルフホストランナーのリアルタイムアクティビティをモニターできます。
+If this fails due to the service being installed elsewhere, you can find the service name in the list of running services. For example, on most Linux systems you can use the `systemctl` command:
+
+```shell
+$ systemctl --type=service | grep actions.runner
+actions.runner.octo-org-octo-repo.hostname.service loaded active running GitHub Actions Runner (octo-org-octo-repo.hostname)
+```
+
+You can use `journalctl` to monitor the real-time activity of the self-hosted runner:
 
 ```shell
 $ sudo journalctl -u actions.runner.octo-org-octo-repo.runner01.service -f
 ```
 
-この出力例では、`runner01`が起動し、`testAction`という名前をジョブを受信し、結果のステータスを表示していることがわかります。
+In this example output, you can see `runner01` start, receive a job named `testAction`, and then display the resulting status:
 
 ```shell
 Feb 11 14:57:07 runner01 runsvc.sh[962]: Starting Runner listener with startup type: service
@@ -74,22 +134,23 @@ Feb 11 16:06:54 runner01 runsvc.sh[962]: 2020-02-11 16:06:54Z: Running job: test
 Feb 11 16:07:10 runner01 runsvc.sh[962]: 2020-02-11 16:07:10Z: Job testAction completed with result: Succeeded
 ```
 
-systemdの設定を見るには、サービスファイルを以下で見つけることができます。 `/etc/systemd/system/actions.runner.<org>-<repo>.<runnerName>.service` セルフホストランナーアプリケーションサービスをカスタマイズしたい場合、このファイルを直接修正しないでください。 「[セルフホストランナーアプリケーションのサービスとしての構成](/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service#customizing-the-self-hosted-runner-service)」に述べられている指示に従ってください。
+To view the `systemd` configuration, you can locate the service file here: `/etc/systemd/system/actions.runner.<org>-<repo>.<runnerName>.service`.
+If you want to customize the self-hosted runner application service, do not directly modify this file. Follow the instructions described in "[Configuring the self-hosted runner application as a service](/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service#customizing-the-self-hosted-runner-service)."
 
 {% endlinux %}
 
 {% mac %}
 
-### launchdを使ってのセルフホストランナーアプリケーションのチェック
+## Using `launchd` to check the self-hosted runner application service
 
-サービスとしてアプリケーションを実行しているmacOSベースのセルフホストランナーでは、リアルタイムのアクティビティをモニターするのに`launchctl`が使えます。 デフォルトのlaunchdベースのサービスは、以下の命名規則を使います。 `actions.runner.<org>-<repo>.<runnerName>` この名前は80文字を超える場合には切り捨てられるので、サービス名を見つける方法としてはランナーのディレクトリ内にある_.service_ファイルをチェックするのが良いでしょう。
+For macOS-based self-hosted runners running the application as a service, you can use `launchctl` to monitor their real-time activity. The default launchd-based service uses the following naming convention: `actions.runner.<org>-<repo>.<runnerName>`. This name is truncated if it exceeds 80 characters, so the preferred way of finding the service's name is by checking the _.service_ file in the runner directory:
 
 ```shell
 % cat ~/actions-runner/.service
 /Users/exampleUsername/Library/LaunchAgents/actions.runner.octo-org-octo-repo.runner01.plist
 ```
 
-`svc.sh`スクリプトは`launchctl`を使ってアプリケーションが動作しているかをチェックします。 例:
+The `svc.sh` script uses `launchctl` to check whether the application is running. For example:
 
 ```shell
 $ ./svc.sh status
@@ -99,25 +160,26 @@ Started:
 379 0 actions.runner.example.runner01
 ```
 
-結果の出力には、プロセスIDとアプリケーションのlaunchdサービスの名前が含まれます。
+The resulting output includes the process ID and the name of the application’s `launchd` service.
 
-launchdの設定を見るには、サービスファイルを以下で見つけることができます。 `/Users/exampleUsername/Library/LaunchAgents/actions.runner.<repoName>.<runnerName>.service` セルフホストランナーアプリケーションサービスをカスタマイズしたい場合、このファイルを直接修正しないでください。 「[セルフホストランナーアプリケーションのサービスとしての構成](/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service#customizing-the-self-hosted-runner-service-1)」に述べられている指示に従ってください。
+To view the `launchd` configuration, you can locate the service file here: `/Users/exampleUsername/Library/LaunchAgents/actions.runner.<repoName>.<runnerName>.service`.
+If you want to customize the self-hosted runner application service, do not directly modify this file. Follow the instructions described in "[Configuring the self-hosted runner application as a service](/actions/hosting-your-own-runners/configuring-the-self-hosted-runner-application-as-a-service#customizing-the-self-hosted-runner-service-1)."
 
 {% endmac %}
 
 
 {% windows %}
 
-### PowerShellを使ってのセルフホストランナーアプリケーションのチェック
+## Using PowerShell to check the self-hosted runner application service
 
-サービスとしてアプリケーションを実行しているWindowsベースのセルフホストランナーでは、リアルタイムのアクティビティをモニターするのにPowerShellが使えます。 サービスは`GitHub Actions Runner (<org>-<repo>.<runnerName>)`という命名規則を使います。 ランナーのディレクトリ内にある_.service_ファイルを調べても、サービスの名前を見つけることができます。
+For Windows-based self-hosted runners running the application as a service, you can use PowerShell to monitor their real-time activity. The service uses the naming convention `GitHub Actions Runner (<org>-<repo>.<runnerName>)`. You can also find the service's name by checking the _.service_ file in the runner directory:
 
 ```shell
 PS C:\actions-runner> Get-Content .service
 actions.runner.octo-org-octo-repo.runner01.service
 ```
 
-Windowsの_サービス_アプリケーション（`services.msc`）でも、ランナーのステータスを見ることができます。 PowerShellを使ってサービスが動作しているかをチェックできます。
+You can view the status of the runner in the Windows _Services_ application (`services.msc`). You can also use PowerShell to check whether the service is running:
 
 ```shell
 PS C:\actions-runner> Get-Service "actions.runner.octo-org-octo-repo.runner01.service" | Select-Object Name, Status
@@ -126,7 +188,7 @@ Name                                                  Status
 actions.runner.octo-org-octo-repo.runner01.service    Running
 ```
 
-PowerShellを使ってセルフホストランナーの最近のアクティビティをチェックすることができます。 この出力例では、アプリケーションが起動し、`testAction`という名前をジョブを受信し、結果のステータスを表示していることがわかります。
+You can use PowerShell to check the recent activity of the self-hosted runner. In this example output, you can see the application start, receive a job named `testAction`, and then display the resulting status:
 
 ```shell
 PS C:\actions-runner> Get-EventLog -LogName Application -Source ActionsRunnerService
@@ -145,34 +207,34 @@ PS C:\actions-runner> Get-EventLog -LogName Application -Source ActionsRunnerSer
 
 {% endwindows %}
 
-### 自動アップデートプロセスのモニタリング
+## Monitoring the automatic update process
 
-セルフホストランナーは、特定のバージョンのしきい値を下回るとジョブを処理できなくなるため、定期的に自動更新プロセスを確認することをお勧めします。 セルフホストランナーアプリケーションは自動的に更新されますが、このプロセスにはオペレーティングシステムやその他のソフトウェアの更新は含まれません。これらの更新を個別に管理する必要があります。
+We recommend that you regularly check the automatic update process, as the self-hosted runner will not be able to process jobs if it falls below a certain version threshold. The self-hosted runner application automatically updates itself, but note that this process does not include any updates to the operating system or other software; you will need to separately manage these updates.
 
-更新のアクティビティは、*Runner_*ログファイルで見ることができます。 例:
+You can view the update activities in the *Runner_* log files. For example:
 
 ```shell
 [Feb 12 12:37:07 INFO SelfUpdater] An update is available.
 ```
 
-加えて、さらなる情報が`_diag`ディレクトリにある_SelfUpdate_ログファイルにあります。
+In addition, you can find more information in the _SelfUpdate_ log files located in the `_diag` directory where you installed the runner application.
 
 {% linux %}
 
-### セルフホストランナー内のコンテナのトラブルシューティング
+## Troubleshooting containers in self-hosted runners
 
-#### Dockerがインストールされていることを確認
+### Checking that Docker is installed
 
-ジョブがコンテナを必要とするなら、セルフホストランナーはLinuxベースで、Dockerがインストールされていなければなりません。 セルフホストランナーにDockerがインストールされており、サービスが動作中であることを確認してください。
+If your jobs require containers, then the self-hosted runner must be Linux-based and needs to have Docker installed. Check that your self-hosted runner has Docker installed and that the service is running.
 
-サービスのステータスの確認には、`systemctl`が使えます。
+You can use `systemctl` to check the service status:
 
 ```shell
 $ sudo systemctl is-active docker.service
 active
 ```
 
-Dockerがインストールされていないなら、Dockerに依存するアクションは以下のエラーで失敗します。
+If Docker is not installed, then dependent actions will fail with the following errors:
 
 ```shell
 [2020-02-13 16:56:10Z INFO DockerCommandManager] Which: 'docker'
@@ -180,15 +242,15 @@ Dockerがインストールされていないなら、Dockerに依存するア�
 [2020-02-13 16:56:10Z ERR  StepsRunner] Caught exception from step: System.IO.FileNotFoundException: File not found: 'docker'
 ```
 
-#### Dockerの権限の確認
+### Checking the Docker permissions
 
-ジョブが次のエラーで失敗するなら、
+If your job fails with the following error:
 
 ```shell
 dial unix /var/run/docker.sock: connect: permission denied
 ```
 
-セルフホストランナーのサービスアカウントがDockerサービスを使う権限を持っているかを確認してください。 systemdの中のセルフホストランナーの設定を調べれば。このアカウントは特定できます。 例:
+Check that the self-hosted runner's service account has permission to use the Docker service. You can identify this account by checking the configuration of the self-hosted runner in `systemd`. For example:
 
 ```shell
 $ sudo systemctl show -p User actions.runner.octo-org-octo-repo.runner01.service

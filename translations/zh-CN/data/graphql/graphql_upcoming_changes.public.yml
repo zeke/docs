@@ -36,13 +36,6 @@ upcoming_changes:
     criticality: 重大
     owner: tambling
   - 
-    location: Query.sponsorsListing
-    description: '`sponsorsListing` 将被删除。使用 `Sponsorable.sponsorsListing` 代替。'
-    reason: '`Query.sponsorsListing` 将被删除。'
-    date: '2020-04-01T00:00:00+00:00'
-    criticality: 重大
-    owner: antn
-  - 
     location: Sponsorship.maintainer
     description: '`maintainer` 将被删除。使用 `Sponsorship.sponsorable` 代替。'
     reason: '`Sponsorship.maintainer` 将被删除。'
@@ -126,3 +119,31 @@ upcoming_changes:
     date: '2021-06-21'
     criticality: 重大
     owner: reybard
+  - 
+    location: ReactionGroup.users
+    description: '`user` 将被删除。使用 `reactors` 字段代替。'
+    reason: 反应者现在可以是人体模特、自动程序和组织。
+    date: '2021-10-01T00:00:00+00:00'
+    criticality: 重大
+    owner: synthead
+  - 
+    location: PullRequest.viewerCanOverrideMergeQueue
+    description: '`viewerCanOverrideMergeQueue` will be removed. Use PullRequest.viewerCanMergeAsAdmin instead.'
+    reason: '`viewer_can_override_merge_queue` will be removed'
+    date: '2022-04-01'
+    criticality: 重大
+    owner: cbeaman
+  - 
+    location: Repository.defaultMergeQueue
+    description: '`defaultMergeQueue` will be removed. Use `Repository.mergeQueue` instead.'
+    reason: '`defaultMergeQueue` will be removed.'
+    date: '2022-04-01'
+    criticality: 重大
+    owner: colinshum
+  - 
+    location: Query.sponsorables.dependencyEcosystem
+    description: '`dependencyEcosystem` will be removed. Use the ecosystem argument instead.'
+    reason: The type is switching from SecurityAdvisoryEcosystem to DependencyGraphEcosystem.
+    date: '2022-07-01T00:00:00+00:00'
+    criticality: 重大
+    owner: cheshire137

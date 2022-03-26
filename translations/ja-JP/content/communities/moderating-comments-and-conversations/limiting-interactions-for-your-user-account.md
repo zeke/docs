@@ -2,15 +2,17 @@
 title: ユーザアカウントの操作を制限する
 intro: ユーザアカウントが所有するすべてのパブリックリポジトリ内の特定のユーザに対して、一定期間アクティビティ制限を適用することができます。
 versions:
-  free-pro-team: '*'
+  fpt: '*'
+  ghec: '*'
 permissions: Anyone can limit interactions for their own user account.
 redirect_from:
   - /github/building-a-strong-community/limiting-interactions-for-your-user-account
 topics:
   - Community
+shortTitle: アカウントのインタラクションの制限
 ---
 
-### 一時的なインタラクションの制限について
+## 一時的なインタラクションの制限について
 
 ユーザアカウントのインタラクションを制限すると、ユーザアカウントが所有するすべてのパブリックリポジトリの一時的なインタラクション制限が有効になります。 {% data reusables.community.interaction-limits-restrictions %}
 
@@ -22,9 +24,9 @@ topics:
 
 ユーザをブロックすることもできます 詳しい情報については、「[個人アカウントでユーザをブロックする](/communities/maintaining-your-safety-on-github/blocking-a-user-from-your-personal-account)」を参照してください。
 
-### ユーザアカウントの操作を制限する
+## ユーザアカウントの操作を制限する
 
-{% data reusables.user_settings.access_settings %}
-1. [User settings] サイドバーの [Moderation settings] で、[**Interaction limits**] をクリックします。 ![[User settings] サイドバーの [Interaction limits] タブ](/assets/images/help/settings/settings-sidebar-interaction-limits.png)
+{% data reusables.user-settings.access_settings %}
+1. In the "Access" section of the sidebar, select **{% octicon "report" aria-label="The report icon" %} Moderation** then click **Interaction limits**.
 {% data reusables.community.set-interaction-limit %}
   ![[Temporary interaction limits] のオプション](/assets/images/help/settings/user-account-temporary-interaction-limits-options.png)

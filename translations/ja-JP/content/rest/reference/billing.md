@@ -1,15 +1,15 @@
 ---
 title: 支払い
+intro: 'Billing APIを使うと、ユーザやOrganizationに対する{% data variables.product.prodname_actions %}や{% data variables.product.prodname_registry %}の確認と使用状況をモニターできます。'
 versions:
-  free-pro-team: '*'
+  fpt: '*'
+  ghec: '*'
+  ghes: '>=3.4'
 topics:
   - API
+miniTocMaxHeadingLevel: 3
 ---
 
-Billing API を使用して、ユーザおよび Organization の {% data variables.product.prodname_actions %} および {% data variables.product.prodname_registry %} の料金と使用状況を監視できます。
-
-Enterprise の支払情報を取得できます。 詳しい情報については、「[{% data variables.product.prodname_dotcom %} Enterprise 管理](/rest/reference/enterprise-admin#billing)」REST API を参照してください。
-
-{% for operation in currentRestOperations %}
-  {% unless operation.subcategory %}{% include rest_operation %}{% endunless %}
-{% endfor %}
+<!--
+  Operations are automatically generated. Markdown for this page is located in data/reusables/rest-reference/billing
+-->
