@@ -1,1 +1,1 @@
-Optionally, select **Allow built-in authentication** to invite users to use built-in authentication if they don’t belong to {% data variables.product.product_location %}'s identity provider.
+Optionally, to allow people without an account on your external authentication system to sign in with built-in authentication, select **Allow built-in authentication**. For more information, see [AUTOTITLE](/admin/managing-iam/understanding-iam-for-enterprises/allowing-built-in-authentication-for-users-outside-your-provider).

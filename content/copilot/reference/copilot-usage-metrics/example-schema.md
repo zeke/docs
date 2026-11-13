@@ -1,0 +1,1168 @@
+---
+title: Example schema for Copilot usage metrics
+shortTitle: Example schema
+intro: See an example schema of the data returned by the {% data variables.product.prodname_copilot_short %} usage metrics API.
+permissions: '{% data reusables.copilot.usage-metrics-permissions %}'
+versions:
+  feature: copilot
+contentType: reference
+category:
+  - Copilot usage metrics
+  - Understand available data
+  - Track Copilot usage
+allowTitleToDifferFromFilename: true
+---
+
+The following examples show schemas for user-, enterprise-, and repository-level data returned by the {% data variables.product.prodname_copilot_short %} usage metrics endpoints. Returned fields vary by metric and aggregation level. Use these examples to understand the response structure and interpret its fields and metrics.
+
+## User-level schema example
+
+```json copy
+[{
+  "ai_adoption_phase": {
+    "phase": "Phase 2",
+    "phase_number": 2,
+    "version": "v1"
+  },
+  "ai_credits_used": 12.5,
+  "client_telemetry_present": true,
+  "code_acceptance_activity_count": 3,
+  "code_generation_activity_count": 3,
+  "day": "2026-10-19",
+  "distinct_custom_agent_use_count": 2,
+  "distinct_mcp_use_count": 2,
+  "distinct_plugin_use_count": 1,
+  "distinct_skill_use_count": 3,
+  "distinct_slash_cmd_use_count": 2,
+  "enterprise_id": "1",
+  "loc_added_sum": 32,
+  "loc_deleted_sum": 6,
+  "loc_suggested_to_add_sum": 34,
+  "loc_suggested_to_delete_sum": 6,
+  "totals_by_cli": {
+    "last_known_cli_version": {
+      "cli_version": "1.0.97",
+      "sampled_at": "2026-10-19T00:01:43.000Z"
+    },
+    "prompt_count": 2,
+    "request_count": 2,
+    "session_count": 2,
+    "token_usage": {
+      "avg_tokens_per_request": 4400.0,
+      "output_tokens_sum": 5000,
+      "prompt_tokens_sum": 3800
+    }
+  },
+  "totals_by_client": [{
+    "client": "opencode",
+    "request_count": 3,
+    "session_count": 2,
+    "token_usage": {
+      "avg_tokens_per_request": 1100.0,
+      "output_tokens_sum": 900,
+      "prompt_tokens_sum": 2400
+    },
+    "totals_by_model": [{
+      "model": "claude-opus-5.5",
+      "model_selection_mode": "user_selected",
+      "is_custom_enterprise_model": false,
+      "request_count": 2,
+      "token_usage": {
+        "avg_tokens_per_request": 1200.0,
+        "output_tokens_sum": 600,
+        "prompt_tokens_sum": 1800
+      }
+    }, {
+      "model": "claude-sonnet-5",
+      "model_selection_mode": "auto",
+      "is_custom_enterprise_model": false,
+      "request_count": 1,
+      "token_usage": {
+        "avg_tokens_per_request": 900.0,
+        "output_tokens_sum": 300,
+        "prompt_tokens_sum": 600
+      }
+    }]
+  }, {
+    "client": "copilot_cli",
+    "request_count": 2,
+    "session_count": 1,
+    "token_usage": {
+      "avg_tokens_per_request": 900.0,
+      "output_tokens_sum": 300,
+      "prompt_tokens_sum": 1500
+    },
+    "totals_by_model": [{
+      "model": "gpt-5.6-sol",
+      "model_selection_mode": "user_selected",
+      "is_custom_enterprise_model": false,
+      "request_count": 1,
+      "token_usage": {
+        "avg_tokens_per_request": 600.0,
+        "output_tokens_sum": 100,
+        "prompt_tokens_sum": 500
+      }
+    }, {
+      "model": "gpt-5.6-sol",
+      "model_selection_mode": "user_selected",
+      "is_custom_enterprise_model": true,
+      "request_count": 1,
+      "token_usage": {
+        "avg_tokens_per_request": 1200.0,
+        "output_tokens_sum": 200,
+        "prompt_tokens_sum": 1000
+      }
+    }]
+  }],
+  "totals_by_copilot_app": {
+    "prompt_count": 1,
+    "request_count": 3,
+    "session_count": 1,
+    "token_usage": {
+      "avg_tokens_per_request": 3200.0,
+      "output_tokens_sum": 4200,
+      "prompt_tokens_sum": 5400
+    }
+  },
+  "totals_by_custom_agent": [{
+    "custom_agent": "general-purpose",
+    "interaction_count": 4
+  }, {
+    "custom_agent": "release-reviewer",
+    "interaction_count": 2
+  }],
+  "totals_by_3rd_party_agent": [{
+    "agent_id": "2246796",
+    "agent_name": "Claude (Anthropic)",
+    "user_initiated_interaction_count": 2
+  }, {
+    "agent_id": "2248422",
+    "agent_name": "Codex (OpenAI)",
+    "user_initiated_interaction_count": 2
+  }],
+  "totals_by_feature": [{
+    "code_acceptance_activity_count": 1,
+    "code_generation_activity_count": 1,
+    "feature": "code_completion",
+    "loc_added_sum": 8,
+    "loc_deleted_sum": 0,
+    "loc_suggested_to_add_sum": 10,
+    "loc_suggested_to_delete_sum": 0,
+    "user_initiated_interaction_count": 0
+  }, {
+    "code_acceptance_activity_count": 2,
+    "code_generation_activity_count": 2,
+    "feature": "copilot_app",
+    "loc_added_sum": 24,
+    "loc_deleted_sum": 6,
+    "loc_suggested_to_add_sum": 24,
+    "loc_suggested_to_delete_sum": 6,
+    "user_initiated_interaction_count": 1
+  }],
+  "totals_by_ide": [{
+    "code_acceptance_activity_count": 1,
+    "code_generation_activity_count": 1,
+    "ide": "vscode",
+    "last_known_ide_version": {
+      "ide_version": "1.85.0",
+      "sampled_at": "2026-10-19T00:00:02.000Z"
+    },
+    "last_known_plugin_version": {
+      "plugin": "",
+      "plugin_version": "",
+      "sampled_at": "2026-10-19T00:00:02.000Z"
+    },
+    "loc_added_sum": 8,
+    "loc_deleted_sum": 0,
+    "loc_suggested_to_add_sum": 10,
+    "loc_suggested_to_delete_sum": 0,
+    "user_initiated_interaction_count": 0
+  }],
+  "totals_by_language_feature": [{
+    "code_acceptance_activity_count": 1,
+    "code_generation_activity_count": 1,
+    "feature": "code_completion",
+    "language": "unknown",
+    "loc_added_sum": 8,
+    "loc_deleted_sum": 0,
+    "loc_suggested_to_add_sum": 10,
+    "loc_suggested_to_delete_sum": 0
+  }, {
+    "code_acceptance_activity_count": 2,
+    "code_generation_activity_count": 2,
+    "feature": "copilot_app",
+    "language": "markdown",
+    "loc_added_sum": 24,
+    "loc_deleted_sum": 6,
+    "loc_suggested_to_add_sum": 24,
+    "loc_suggested_to_delete_sum": 6
+  }],
+  "totals_by_language_model": [],
+  "totals_by_local_byok": [{
+    "byok_kind": "local_managed",
+    "prompt_count": 2,
+    "request_count": 2,
+    "session_count": 2,
+    "surface": "copilot_cli",
+    "token_usage": {
+      "avg_tokens_per_request": 4200.0,
+      "output_tokens_sum": 4800,
+      "prompt_tokens_sum": 3600
+    }
+  }],
+  "totals_by_mcp": [{
+    "interaction_count": 8,
+    "mcp": "github-mcp-server"
+  }, {
+    "interaction_count": 3,
+    "mcp": "docs-search"
+  }],
+  "totals_by_model_feature": [],
+  "totals_by_vscode_agent": {
+    "session_count": 1,
+    "total_user_messages": 1
+  },
+  "totals_by_plugin": [{
+    "interaction_count": 2,
+    "plugin": "engineering-tools"
+  }],
+  "totals_by_skill": [{
+    "interaction_count": 2,
+    "skill": "code-review"
+  }, {
+    "interaction_count": 2,
+    "skill": "release-checks"
+  }, {
+    "interaction_count": 1,
+    "skill": "other"
+  }],
+  "totals_by_slash_cmd": [{
+    "interaction_count": 3,
+    "slash_cmd": "/plan"
+  }, {
+    "interaction_count": 1,
+    "slash_cmd": "/release-check"
+  }],
+  "usage_metrics_requirements": {
+    "met": [],
+    "unmet": ["vscode"],
+    "unknown": []
+  },
+  "used_agent": false,
+  "used_chat": false,
+  "used_cli": true,
+  "used_copilot_app": true,
+  "used_copilot_cloud_agent": false,
+  "used_copilot_code_review_active": null,
+  "used_copilot_code_review_passive": null,
+  "used_copilot_coding_agent": false,
+  "used_local_byok": true,
+  "used_vscode_agent": true,
+  "user_id": 1,
+  "user_login": "login1",
+  "user_initiated_interaction_count": 1
+}]
+```
+
+Organization per-user reports use the same `totals_by_3rd_party_agent` entry fields and also include `organization_id`. The per-user `totals_by_3rd_party_agent` entries omit `session_count`.
+
+In both enterprise and organization per-user reports, `used_vscode_agent` and `totals_by_vscode_agent` provide dedicated metrics for the {% data variables.product.prodname_vscode_shortname %} Agents window. These fields appear at the top level in both 1-day and 28-day reports. They are omitted when no dedicated {% data variables.product.prodname_vscode_shortname %} Agents-window data is available, and `totals_by_vscode_agent` is omitted unless both of its counts are available.
+
+The customization fields shown in this example appear in both 1-day and 28-day per-user reports for enterprises and organizations. Configured names such as `release-reviewer` and `docs-search` identify customizations created by your organization.
+
+Customizations with unavailable names or names that look like file paths remain grouped under `other` or `custom`. In per-user 1-day reports, each of the five customization arrays retains up to 25 named entries per user. Additional entries are combined into a trailing `other` entry. An entry's absence from a capped array does not mean that it had zero usage.
+
+For coverage and naming rules, see [AUTOTITLE](/copilot/reference/copilot-usage-metrics/copilot-usage-metrics#customization-fields-api-only).
+
+The `totals_by_client` array appears at the top level of each user record in both 1-day and 28-day per-user reports, for both enterprise and organization scopes. It counts successful model requests server-side, so it can include clients, such as OpenCode, that don't appear in `totals_by_ide`. Each `totals_by_model` entry includes `is_custom_enterprise_model`. In this example, `gpt-5.6-sol` appears twice for `copilot_cli` because the user ran it both as a {% data variables.product.prodname_copilot_short %}-hosted model and as an enterprise custom model. Local BYOK requests don't go through {% data variables.product.github %}, so they appear in `totals_by_local_byok` rather than `totals_by_client`.
+
+In this example, `used_copilot_code_review_active` and `used_copilot_code_review_passive` are `null` because there was no {% data variables.copilot.copilot_code-review_short %} signal for the user that day. `used_copilot_cloud_agent` and `used_copilot_coding_agent` always carry the same value.
+
+`client_telemetry_present` and `usage_metrics_requirements` appear at the top level of each user record in 1-day and 28-day per-user reports, for both enterprise and organization scopes. In 28-day reports, they describe the record's `day`. In this example, `usage_metrics_requirements.unmet` lists `vscode` because the user's last-known {% data variables.product.prodname_vscode_shortname %} version is below the supported minimum. `client_telemetry_present` is null or omitted when telemetry status is unknown or wasn't evaluated, such as for users with only {% data variables.copilot.copilot_cloud_agent %} or {% data variables.copilot.copilot_code-review_short %} activity. `usage_metrics_requirements` is null or omitted when no IDE or extension can be identified.
+
+## Enterprise-level schema example
+
+```json copy
+[ {
+  "day_totals" : [ {
+    "below_usage_metrics_minimum_user_count" : 1,
+    "code_acceptance_activity_count" : 4,
+    "code_generation_activity_count" : 4,
+    "daily_active_cli_users" : 2,
+    "daily_active_copilot_app_users" : 1,
+    "daily_active_copilot_cloud_agent_users" : 1,
+    "daily_active_copilot_code_review_users" : 1,
+    "daily_active_local_byok_users" : 2,
+    "daily_active_users" : 2,
+    "daily_active_vscode_agent_users" : 2,
+    "daily_passive_copilot_code_review_users" : 0,
+    "day" : "2025-10-01",
+    "distinct_custom_agent_use_count" : 2,
+    "distinct_mcp_use_count" : 2,
+    "distinct_plugin_use_count" : 1,
+    "distinct_skill_use_count" : 3,
+    "distinct_slash_cmd_use_count" : 2,
+    "enterprise_id" : "1",
+    "loc_added_sum" : 54,
+    "loc_deleted_sum" : 6,
+    "loc_suggested_to_add_sum" : 59,
+    "loc_suggested_to_delete_sum" : 6,
+    "missing_client_telemetry_user_count" : 0,
+    "monthly_active_agent_users" : 0,
+    "monthly_active_chat_users" : 2,
+    "monthly_active_copilot_cloud_agent_users" : 1,
+    "monthly_active_copilot_code_review_users" : 1,
+    "monthly_active_local_byok_users" : 2,
+    "monthly_active_users" : 2,
+    "monthly_active_vscode_agent_users" : 2,
+    "monthly_passive_copilot_code_review_users" : 0,
+    "pull_requests" : {
+      "median_minutes_to_merge" : 2.5,
+      "median_minutes_to_merge_copilot_authored" : 2.5,
+      "median_minutes_to_merge_copilot_reviewed" : 2.5,
+      "total_applied_suggestions" : 1,
+      "total_copilot_applied_suggestions" : 1,
+      "total_copilot_suggestions" : 1,
+      "total_created" : 2,
+      "total_created_by_copilot" : 1,
+      "total_merged" : 2,
+      "total_merged_created_by_copilot" : 1,
+      "total_merged_reviewed_by_copilot" : 1,
+      "total_reviewed" : 1,
+      "total_reviewed_by_copilot" : 1,
+      "total_suggestions" : 1
+    },
+    "totals_by_3rd_party_agent" : [ {
+      "agent_id" : "2246796",
+      "agent_name" : "Claude (Anthropic)",
+      "session_count" : 1,
+      "user_initiated_interaction_count" : 2
+    }, {
+      "agent_id" : "2248422",
+      "agent_name" : "Codex (OpenAI)",
+      "session_count" : 2,
+      "user_initiated_interaction_count" : 2
+    } ],
+    "totals_by_ai_adoption_phase" : [ {
+      "avg_code_acceptance_activities" : 1.0,
+      "avg_code_generation_activities" : 1.0,
+      "avg_loc_added" : 22.0,
+      "avg_loc_deleted" : 0.0,
+      "avg_pull_requests_created" : 1.0,
+      "avg_pull_requests_median_minutes_to_merge" : 2.5,
+      "avg_pull_requests_merged" : 1.0,
+      "avg_pull_requests_minutes_to_review" : 1.5,
+      "avg_pull_requests_review_cycles" : 1.0,
+      "avg_pull_requests_reviewed" : 0.0,
+      "avg_user_initiated_interactions" : 0.0,
+      "phase" : "Phase 1",
+      "phase_number" : 1,
+      "total_engaged_users" : 1,
+      "users_in_phase_28d" : 1,
+      "total_pull_requests_merged" : 1
+    }, {
+      "avg_code_acceptance_activities" : 3.0,
+      "avg_code_generation_activities" : 3.0,
+      "avg_loc_added" : 32.0,
+      "avg_loc_deleted" : 6.0,
+      "avg_pull_requests_created" : 1.0,
+      "avg_pull_requests_median_minutes_to_merge" : 2.5,
+      "avg_pull_requests_merged" : 1.0,
+      "avg_pull_requests_minutes_to_review" : 2.0,
+      "avg_pull_requests_review_cycles" : 2.0,
+      "avg_pull_requests_reviewed" : 1.0,
+      "avg_user_initiated_interactions" : 1.0,
+      "phase" : "Phase 3",
+      "phase_number" : 3,
+      "total_engaged_users" : 1,
+      "users_in_phase_28d" : 1,
+      "total_pull_requests_merged" : 1
+    } ],
+    "totals_by_cli" : {
+      "prompt_count" : 3,
+      "request_count" : 3,
+      "session_count" : 3,
+      "token_usage" : {
+        "avg_tokens_per_request" : 4100.0,
+        "output_tokens_sum" : 7000,
+        "prompt_tokens_sum" : 5300
+      }
+    },
+    "totals_by_client" : [ {
+      "client" : "opencode",
+      "request_count" : 3,
+      "session_count" : 2,
+      "token_usage" : {
+        "avg_tokens_per_request" : 1100.0,
+        "output_tokens_sum" : 900,
+        "prompt_tokens_sum" : 2400
+      },
+      "totals_by_model" : [ {
+        "model" : "claude-opus-5.5",
+        "model_selection_mode" : "user_selected",
+        "is_custom_enterprise_model" : false,
+        "request_count" : 2,
+        "token_usage" : {
+          "avg_tokens_per_request" : 1200.0,
+          "output_tokens_sum" : 600,
+          "prompt_tokens_sum" : 1800
+        }
+      }, {
+        "model" : "claude-sonnet-5",
+        "model_selection_mode" : "auto",
+        "is_custom_enterprise_model" : false,
+        "request_count" : 1,
+        "token_usage" : {
+          "avg_tokens_per_request" : 900.0,
+          "output_tokens_sum" : 300,
+          "prompt_tokens_sum" : 600
+        }
+      } ]
+    }, {
+      "client" : "copilot_cli",
+      "request_count" : 1,
+      "session_count" : 1,
+      "token_usage" : {
+        "avg_tokens_per_request" : 600.0,
+        "output_tokens_sum" : 100,
+        "prompt_tokens_sum" : 500
+      },
+      "totals_by_model" : [ {
+        "model" : "gpt-5.6-sol",
+        "model_selection_mode" : "user_selected",
+        "is_custom_enterprise_model" : false,
+        "request_count" : 1,
+        "token_usage" : {
+          "avg_tokens_per_request" : 600.0,
+          "output_tokens_sum" : 100,
+          "prompt_tokens_sum" : 500
+        }
+      } ]
+    } ],
+    "totals_by_copilot_app" : {
+      "prompt_count" : 2,
+      "request_count" : 6,
+      "session_count" : 2,
+      "token_usage" : {
+        "avg_tokens_per_request" : 2466.67,
+        "output_tokens_sum" : 6200,
+        "prompt_tokens_sum" : 8600
+      }
+    },
+    "totals_by_custom_agent" : [ {
+      "custom_agent" : "general-purpose",
+      "interaction_count" : 7
+    }, {
+      "custom_agent" : "other",
+      "interaction_count" : 3
+    } ],
+    "totals_by_feature" : [ {
+      "code_acceptance_activity_count" : 2,
+      "code_generation_activity_count" : 2,
+      "feature" : "code_completion",
+      "loc_added_sum" : 30,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 35,
+      "loc_suggested_to_delete_sum" : 0,
+      "user_initiated_interaction_count" : 0
+    }, {
+      "code_acceptance_activity_count" : 2,
+      "code_generation_activity_count" : 2,
+      "feature" : "copilot_app",
+      "loc_added_sum" : 24,
+      "loc_deleted_sum" : 6,
+      "loc_suggested_to_add_sum" : 24,
+      "loc_suggested_to_delete_sum" : 6,
+      "user_initiated_interaction_count" : 1
+    } ],
+    "totals_by_ide" : [ {
+      "code_acceptance_activity_count" : 2,
+      "code_generation_activity_count" : 2,
+      "ide" : "vscode",
+      "loc_added_sum" : 30,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 35,
+      "loc_suggested_to_delete_sum" : 0,
+      "user_initiated_interaction_count" : 0
+    } ],
+    "totals_by_language_feature" : [ {
+      "code_acceptance_activity_count" : 2,
+      "code_generation_activity_count" : 2,
+      "feature" : "code_completion",
+      "language" : "unknown",
+      "loc_added_sum" : 30,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 35,
+      "loc_suggested_to_delete_sum" : 0
+    }, {
+      "code_acceptance_activity_count" : 2,
+      "code_generation_activity_count" : 2,
+      "feature" : "copilot_app",
+      "language" : "markdown",
+      "loc_added_sum" : 24,
+      "loc_deleted_sum" : 6,
+      "loc_suggested_to_add_sum" : 24,
+      "loc_suggested_to_delete_sum" : 6
+    } ],
+    "totals_by_language_model" : [ ],
+    "totals_by_local_byok" : [ {
+      "byok_kind" : "local_managed",
+      "prompt_count" : 2,
+      "request_count" : 2,
+      "session_count" : 2,
+      "surface" : "copilot_cli",
+      "token_usage" : {
+        "avg_tokens_per_request" : 4900.0,
+        "output_tokens_sum" : 5500,
+        "prompt_tokens_sum" : 4300
+      }
+    }, {
+      "byok_kind" : "remote_user",
+      "prompt_count" : 1,
+      "request_count" : 1,
+      "session_count" : 1,
+      "surface" : "copilot_cli",
+      "token_usage" : {
+        "avg_tokens_per_request" : 2500.0,
+        "output_tokens_sum" : 1500,
+        "prompt_tokens_sum" : 1000
+      }
+    } ],
+    "totals_by_mcp" : [ {
+      "interaction_count" : 12,
+      "mcp" : "github-mcp-server"
+    }, {
+      "interaction_count" : 5,
+      "mcp" : "other"
+    } ],
+    "totals_by_model_feature" : [ ],
+    "totals_by_vscode_agent" : {
+      "session_count" : 2,
+      "total_user_messages" : 2
+    },
+    "totals_by_plugin" : [ {
+      "interaction_count" : 4,
+      "plugin" : "other"
+    } ],
+    "totals_by_skill" : [ {
+      "interaction_count" : 9,
+      "skill" : "other"
+    } ],
+    "totals_by_slash_cmd" : [ {
+      "interaction_count" : 6,
+      "slash_cmd" : "/plan"
+    }, {
+      "interaction_count" : 2,
+      "slash_cmd" : "custom"
+    } ],
+    "user_initiated_interaction_count" : 1,
+    "weekly_active_copilot_cloud_agent_users" : 1,
+    "weekly_active_copilot_code_review_users" : 1,
+    "weekly_active_local_byok_users" : 2,
+    "weekly_active_users" : 2,
+    "weekly_active_vscode_agent_users" : 2,
+    "weekly_passive_copilot_code_review_users" : 0
+  } ],
+  "enterprise_id" : "1",
+  "copilot_feature_engagement" : {
+    "active_user_count" : 2,
+    "totals_by_feature" : [ {
+      "feature" : "agent_edit",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "chat",
+      "engaged_user_count" : 2
+    }, {
+      "feature" : "cloud_agent",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "code_completion",
+      "engaged_user_count" : 2
+    }, {
+      "feature" : "code_review_active",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "code_review_passive",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "copilot_cli",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "github_app",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "vscode_agent",
+      "engaged_user_count" : 1
+    } ]
+  },
+  "report_end_day" : "2025-10-01",
+  "report_start_day" : "2025-09-04"
+}, {
+  "day_totals" : [ {
+    "below_usage_metrics_minimum_user_count" : 0,
+    "code_acceptance_activity_count" : 2,
+    "code_generation_activity_count" : 3,
+    "daily_active_copilot_cloud_agent_users" : 0,
+    "daily_active_copilot_code_review_users" : 0,
+    "daily_active_local_byok_users" : 0,
+    "daily_active_users" : 2,
+    "daily_passive_copilot_code_review_users" : 0,
+    "day" : "2025-10-01",
+    "distinct_custom_agent_use_count" : 0,
+    "distinct_mcp_use_count" : 0,
+    "distinct_plugin_use_count" : 0,
+    "distinct_skill_use_count" : 0,
+    "distinct_slash_cmd_use_count" : 0,
+    "enterprise_id" : "2",
+    "loc_added_sum" : 50,
+    "loc_deleted_sum" : 3,
+    "loc_suggested_to_add_sum" : 52,
+    "loc_suggested_to_delete_sum" : 3,
+    "missing_client_telemetry_user_count" : 1,
+    "monthly_active_agent_users" : 0,
+    "monthly_active_chat_users" : 2,
+    "monthly_active_copilot_cloud_agent_users" : 0,
+    "monthly_active_copilot_code_review_users" : 0,
+    "monthly_active_local_byok_users" : 0,
+    "monthly_active_users" : 2,
+    "monthly_passive_copilot_code_review_users" : 0,
+    "pull_requests" : {
+      "total_applied_suggestions" : 0,
+      "total_copilot_applied_suggestions" : 0,
+      "total_copilot_suggestions" : 0,
+      "total_created" : 1,
+      "total_created_by_copilot" : 0,
+      "total_merged" : 0,
+      "total_merged_created_by_copilot" : 0,
+      "total_merged_reviewed_by_copilot" : 0,
+      "total_reviewed" : 1,
+      "total_reviewed_by_copilot" : 0,
+      "total_suggestions" : 1
+    },
+    "totals_by_ai_adoption_phase" : [ {
+      "avg_code_acceptance_activities" : 0.0,
+      "avg_code_generation_activities" : 1.0,
+      "avg_loc_added" : 12.0,
+      "avg_loc_deleted" : 3.0,
+      "avg_pull_requests_created" : 0.0,
+      "avg_pull_requests_median_minutes_to_merge" : 0.0,
+      "avg_pull_requests_merged" : 0.0,
+      "avg_pull_requests_minutes_to_review" : 0.0,
+      "avg_pull_requests_review_cycles" : 0.0,
+      "avg_pull_requests_reviewed" : 0.0,
+      "avg_user_initiated_interactions" : 0.0,
+      "phase" : "Phase 3",
+      "phase_number" : 3,
+      "total_engaged_users" : 1,
+      "users_in_phase_28d" : 1,
+      "total_pull_requests_merged" : 0
+    }, {
+      "avg_code_acceptance_activities" : 2.0,
+      "avg_code_generation_activities" : 2.0,
+      "avg_loc_added" : 38.0,
+      "avg_loc_deleted" : 0.0,
+      "avg_pull_requests_created" : 1.0,
+      "avg_pull_requests_median_minutes_to_merge" : 0.0,
+      "avg_pull_requests_merged" : 0.0,
+      "avg_pull_requests_minutes_to_review" : 0.0,
+      "avg_pull_requests_review_cycles" : 0.0,
+      "avg_pull_requests_reviewed" : 1.0,
+      "avg_user_initiated_interactions" : 1.0,
+      "phase" : "Phase 1",
+      "phase_number" : 1,
+      "total_engaged_users" : 1,
+      "users_in_phase_28d" : 1,
+      "total_pull_requests_merged" : 0
+    } ],
+    "totals_by_client" : [ {
+      "client" : "github_app",
+      "request_count" : 2,
+      "session_count" : 1,
+      "token_usage" : {
+        "avg_tokens_per_request" : 1000.0,
+        "output_tokens_sum" : 500,
+        "prompt_tokens_sum" : 1500
+      },
+      "totals_by_model" : [ {
+        "model" : "gpt-5.6-sol",
+        "model_selection_mode" : "user_selected",
+        "is_custom_enterprise_model" : false,
+        "request_count" : 2,
+        "token_usage" : {
+          "avg_tokens_per_request" : 1000.0,
+          "output_tokens_sum" : 500,
+          "prompt_tokens_sum" : 1500
+        }
+      } ]
+    }, {
+      "client" : "code_review",
+      "request_count" : 2,
+      "session_count" : 1,
+      "token_usage" : {
+        "avg_tokens_per_request" : 800.0,
+        "output_tokens_sum" : 400,
+        "prompt_tokens_sum" : 1200
+      },
+      "totals_by_model" : [ {
+        "model" : "unknown",
+        "model_selection_mode" : "product_selected",
+        "is_custom_enterprise_model" : false,
+        "request_count" : 2,
+        "token_usage" : {
+          "avg_tokens_per_request" : 800.0,
+          "output_tokens_sum" : 400,
+          "prompt_tokens_sum" : 1200
+        }
+      } ]
+    } ],
+    "totals_by_custom_agent" : [ ],
+    "totals_by_feature" : [ {
+      "code_acceptance_activity_count" : 1,
+      "code_generation_activity_count" : 2,
+      "feature" : "code_completion",
+      "loc_added_sum" : 38,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 40,
+      "loc_suggested_to_delete_sum" : 0,
+      "user_initiated_interaction_count" : 0
+    }, {
+      "code_acceptance_activity_count" : 1,
+      "code_generation_activity_count" : 1,
+      "feature" : "copilot_app",
+      "loc_added_sum" : 12,
+      "loc_deleted_sum" : 3,
+      "loc_suggested_to_add_sum" : 12,
+      "loc_suggested_to_delete_sum" : 3,
+      "user_initiated_interaction_count" : 1
+    } ],
+    "totals_by_ide" : [ {
+      "code_acceptance_activity_count" : 1,
+      "code_generation_activity_count" : 2,
+      "ide" : "vscode",
+      "loc_added_sum" : 38,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 40,
+      "loc_suggested_to_delete_sum" : 0,
+      "user_initiated_interaction_count" : 0
+    } ],
+    "totals_by_language_feature" : [ {
+      "code_acceptance_activity_count" : 1,
+      "code_generation_activity_count" : 2,
+      "feature" : "code_completion",
+      "language" : "unknown",
+      "loc_added_sum" : 38,
+      "loc_deleted_sum" : 0,
+      "loc_suggested_to_add_sum" : 40,
+      "loc_suggested_to_delete_sum" : 0
+    }, {
+      "code_acceptance_activity_count" : 1,
+      "code_generation_activity_count" : 1,
+      "feature" : "copilot_app",
+      "language" : "markdown",
+      "loc_added_sum" : 12,
+      "loc_deleted_sum" : 3,
+      "loc_suggested_to_add_sum" : 12,
+      "loc_suggested_to_delete_sum" : 3
+    } ],
+    "totals_by_language_model" : [ ],
+    "totals_by_local_byok" : null,
+    "totals_by_mcp" : [ ],
+    "totals_by_model_feature" : [ ],
+    "totals_by_plugin" : [ ],
+    "totals_by_skill" : [ ],
+    "totals_by_slash_cmd" : [ ],
+    "user_initiated_interaction_count" : 1,
+    "weekly_active_copilot_cloud_agent_users" : 0,
+    "weekly_active_copilot_code_review_users" : 0,
+    "weekly_active_local_byok_users" : 0,
+    "weekly_active_users" : 2,
+    "weekly_passive_copilot_code_review_users" : 0
+  } ],
+  "enterprise_id" : "2",
+  "copilot_feature_engagement" : {
+    "active_user_count" : 2,
+    "totals_by_feature" : [ {
+      "feature" : "agent_edit",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "chat",
+      "engaged_user_count" : 2
+    }, {
+      "feature" : "cloud_agent",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "code_completion",
+      "engaged_user_count" : 2
+    }, {
+      "feature" : "code_review_active",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "code_review_passive",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "copilot_cli",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "github_app",
+      "engaged_user_count" : 1
+    }, {
+      "feature" : "vscode_agent",
+      "engaged_user_count" : 1
+    } ]
+  },
+  "report_end_day" : "2025-10-01",
+  "report_start_day" : "2025-09-04"
+} ]
+```
+
+In each `totals_by_ai_adoption_phase` entry, `total_engaged_users` is the subset of users active on that day, while `users_in_phase_28d` is the full population classified into the phase using the rolling 28-day window as of that day.
+
+Organization aggregated reports use the same top-level `copilot_feature_engagement` object, `totals_by_ai_adoption_phase` entry fields, and `totals_by_3rd_party_agent` entry fields, including `session_count`. They also include `organization_id`.
+
+The customization fields shown in `day_totals` apply to enterprise and organization aggregated 28-day reports. They also appear directly in enterprise and organization aggregated 1-day reports. Like per-user reports, these aggregated reports include configured names for customizations created by your organization.
+
+Similarly, `totals_by_client` appears within each `day_totals` entry in enterprise and organization aggregated 28-day reports, and directly on the record in aggregated 1-day reports. In aggregated reports, each `totals_by_client` entry's `session_count` is de-duplicated across all users rather than summed from per-user counts.
+
+`missing_client_telemetry_user_count` and `below_usage_metrics_minimum_user_count` appear within each `day_totals` entry in enterprise and organization aggregated 28-day reports, and directly on the record in aggregated 1-day reports. They are daily distinct-user counts, so don't sum them across days. A value of `0` is a measured zero, while null or omitted means the count is unavailable, for example for days before the fields existed.
+
+The following user-teams report examples are returned by the `user-teams-1-day` endpoints and are intended to be joined with the per-user usage report on `user_id`, `day`, and the relevant entity id (`organization_id` for the organization scope, `enterprise_id` for the enterprise scope) to derive team-level metrics. For more guidance, see [AUTOTITLE](/copilot/reference/copilot-usage-metrics/team-level-metrics).
+
+> [!NOTE]
+> Teams with fewer than 5 seated {% data variables.product.prodname_copilot_short %} users are omitted from user-teams reports.
+
+## Organization user-teams schema example
+
+```json copy
+[
+  {
+    "user_id": 1001,
+    "user_login": "octocat",
+    "day": "2026-05-14",
+    "organization_id": "999",
+    "team_id": 42,
+    "slug": "frontend"
+  },
+  {
+    "user_id": 1001,
+    "user_login": "octocat",
+    "day": "2026-05-14",
+    "organization_id": "999",
+    "team_id": 43,
+    "slug": "backend"
+  },
+  {
+    "user_id": 1002,
+    "user_login": "hubot",
+    "day": "2026-05-14",
+    "organization_id": "999",
+    "team_id": 42,
+    "slug": "frontend"
+  }
+]
+```
+
+## Enterprise user-teams schema example
+
+```json copy
+[
+  {
+    "user_id": 1001,
+    "user_login": "octocat",
+    "day": "2026-05-14",
+    "enterprise_id": "1",
+    "team_id": 9001,
+    "slug": "eng-platform"
+  },
+  {
+    "user_id": 1001,
+    "user_login": "octocat",
+    "day": "2026-05-14",
+    "enterprise_id": "1",
+    "team_id": 7001,
+    "slug": "business-analytics"
+  },
+  {
+    "user_id": 1002,
+    "user_login": "hubot",
+    "day": "2026-05-14",
+    "enterprise_id": "1",
+    "team_id": 9001,
+    "slug": "eng-platform"
+  }
+]
+```
+
+## Repository-level schema example
+
+The following example shows a repository-level report from an NDJSON file downloaded through a `repos-1-day` endpoint. Each row represents one repository with pull request activity on the requested day.
+
+Both enterprise- and organization-scoped rows include `organization_id`, which identifies the organization that owns the repository. Enterprise-scoped rows also include `enterprise_id`. Organization-scoped rows include `enterprise_id` only when an enterprise owns the organization.
+
+The `copilot_code_review` object is present on every row. Its counts are `0` and its arrays are empty when the repository had no {% data variables.copilot.copilot_code-review_short %} activity that day. For how comments are counted, see [AUTOTITLE](/copilot/reference/copilot-usage-metrics/copilot-usage-metrics#copilot-code-review-outcome-fields).
+
+The `pull_request_review_times` array is empty when the repository merged no qualifying pull requests that day. For which pull requests are counted, see [AUTOTITLE](/copilot/reference/copilot-usage-metrics/copilot-usage-metrics#pull-request-review-time-fields).
+
+For the field reference, see [AUTOTITLE](/copilot/reference/copilot-usage-metrics/copilot-usage-metrics#repository-level-fields-api-only).
+
+```json copy
+[
+  {
+    "day": "2026-07-14",
+    "enterprise_id": "1001",
+    "organization_id": "2002",
+    "repo_id": 900000001,
+    "repo_owner_name": "octodemo-metrics",
+    "repo_name": "example-service-alpha",
+    "repo_visibility": "INTERNAL",
+    "pull_requests": {
+      "total_reviewed": 1,
+      "total_created": 1,
+      "total_created_by_copilot": 1,
+      "total_reviewed_by_copilot": 1,
+      "total_merged": 1,
+      "median_minutes_to_merge": 372.62,
+      "total_suggestions": 0,
+      "total_applied_suggestions": 0,
+      "total_merged_created_by_copilot": 1,
+      "median_minutes_to_merge_copilot_authored": 372.62,
+      "total_copilot_suggestions": 0,
+      "total_copilot_applied_suggestions": 0,
+      "total_merged_reviewed_by_copilot": 1,
+      "median_minutes_to_merge_copilot_reviewed": 372.62,
+      "copilot_suggestions_by_comment_type": []
+    },
+    "pull_request_review_times": [],
+    "copilot_code_review": {
+      "total_comments_evaluated": 0,
+      "total_comments_addressed": 0,
+      "review_comments_by_severity": [],
+      "review_comments_by_review_tier": [],
+      "review_comments_by_comment_type": [],
+      "review_comments_by_customization": [],
+      "total_merged_no_human_change_request_after_review": 1
+    }
+  },
+  {
+    "day": "2026-07-14",
+    "enterprise_id": "1001",
+    "organization_id": "2002",
+    "repo_id": 900000003,
+    "repo_owner_name": "octodemo-metrics",
+    "repo_name": "example-service-gamma",
+    "repo_visibility": "INTERNAL",
+    "pull_requests": {
+      "total_reviewed": 1,
+      "total_created": 0,
+      "total_created_by_copilot": 0,
+      "total_reviewed_by_copilot": 1,
+      "total_merged": 1,
+      "median_minutes_to_merge": 1020.53,
+      "total_suggestions": 0,
+      "total_applied_suggestions": 1,
+      "total_merged_created_by_copilot": 0,
+      "total_copilot_suggestions": 0,
+      "total_copilot_applied_suggestions": 1,
+      "total_merged_reviewed_by_copilot": 1,
+      "median_minutes_to_merge_copilot_reviewed": 1020.53,
+      "copilot_suggestions_by_comment_type": [
+        {
+          "comment_type": "spelling",
+          "total_copilot_suggestions": 0,
+          "total_copilot_applied_suggestions": 1
+        }
+      ]
+    },
+    "pull_request_review_times": [],
+    "copilot_code_review": {
+      "total_comments_evaluated": 3,
+      "total_comments_addressed": 2,
+      "review_comments_by_severity": [
+        {
+          "severity": "high",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        },
+        {
+          "severity": "medium",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 1
+        }
+      ],
+      "review_comments_by_review_tier": [
+        {
+          "review_tier": "balanced",
+          "total_comments_evaluated": 3,
+          "total_comments_addressed": 2
+        }
+      ],
+      "review_comments_by_comment_type": [
+        {
+          "comment_type": "bug",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 1
+        },
+        {
+          "comment_type": "documentation",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        }
+      ],
+      "review_comments_by_customization": [
+        {
+          "customization": "none",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 1
+        },
+        {
+          "customization": "custom_instruction",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        }
+      ],
+      "total_merged_no_human_change_request_after_review": 1
+    }
+  },
+  {
+    "day": "2026-07-14",
+    "organization_id": "3003",
+    "enterprise_id": "",
+    "repo_id": 900000010,
+    "repo_owner_name": "octodemo-metrics",
+    "repo_name": "example-service-delta",
+    "repo_visibility": "PRIVATE",
+    "pull_requests": {
+      "total_reviewed": 1,
+      "total_created": 0,
+      "total_created_by_copilot": 0,
+      "total_reviewed_by_copilot": 1,
+      "total_merged": 2,
+      "median_minutes_to_merge": 1332.96,
+      "total_suggestions": 1,
+      "total_applied_suggestions": 2,
+      "total_merged_created_by_copilot": 1,
+      "median_minutes_to_merge_copilot_authored": 1329.47,
+      "total_copilot_suggestions": 1,
+      "total_copilot_applied_suggestions": 2,
+      "total_merged_reviewed_by_copilot": 2,
+      "median_minutes_to_merge_copilot_reviewed": 1332.96,
+      "copilot_suggestions_by_comment_type": [
+        {
+          "comment_type": "documentation",
+          "total_copilot_suggestions": 1,
+          "total_copilot_applied_suggestions": 1
+        },
+        {
+          "comment_type": "spelling",
+          "total_copilot_suggestions": 0,
+          "total_copilot_applied_suggestions": 1
+        }
+      ]
+    },
+    "pull_request_review_times": [],
+    "copilot_code_review": {
+      "total_comments_evaluated": 4,
+      "total_comments_addressed": 3,
+      "review_comments_by_severity": [
+        {
+          "severity": "high",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        },
+        {
+          "severity": "medium",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 2
+        },
+        {
+          "severity": "low",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 0
+        }
+      ],
+      "review_comments_by_review_tier": [
+        {
+          "review_tier": "max",
+          "total_comments_evaluated": 4,
+          "total_comments_addressed": 3
+        }
+      ],
+      "review_comments_by_comment_type": [
+        {
+          "comment_type": "bug",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        },
+        {
+          "comment_type": "custom",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 1
+        },
+        {
+          "comment_type": "security",
+          "total_comments_evaluated": 1,
+          "total_comments_addressed": 1
+        }
+      ],
+      "review_comments_by_customization": [
+        {
+          "customization": "custom_instruction",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 1
+        },
+        {
+          "customization": "none",
+          "total_comments_evaluated": 2,
+          "total_comments_addressed": 2
+        }
+      ],
+      "total_merged_no_human_change_request_after_review": 1
+    }
+  },
+  {
+    "day": "2026-07-14",
+    "enterprise_id": "1001",
+    "organization_id": "2002",
+    "repo_id": 900000020,
+    "repo_owner_name": "octodemo-metrics",
+    "repo_name": "example-service-epsilon",
+    "repo_visibility": "INTERNAL",
+    "pull_requests": {
+      "total_reviewed": 1,
+      "total_created": 1,
+      "total_created_by_copilot": 0,
+      "total_reviewed_by_copilot": 0,
+      "total_merged": 2,
+      "median_minutes_to_merge": 1368.26,
+      "total_suggestions": 0,
+      "total_applied_suggestions": 0,
+      "total_merged_created_by_copilot": 0,
+      "total_copilot_suggestions": 0,
+      "total_copilot_applied_suggestions": 0,
+      "total_merged_reviewed_by_copilot": 0,
+      "copilot_suggestions_by_comment_type": []
+    },
+    "pull_request_review_times": [
+      {
+        "authored_by": "human",
+        "reviewed_by": "human",
+        "total_merged": 2,
+        "median_minutes_ready_to_first_review": 693.31,
+        "p90_minutes_ready_to_first_review": 1244.14,
+        "median_minutes_first_to_final_review": 0,
+        "p90_minutes_first_to_final_review": 0,
+        "median_minutes_final_review_to_merge": 674.95,
+        "p90_minutes_final_review_to_merge": 1213.66
+      }
+    ],
+    "copilot_code_review": {
+      "total_comments_evaluated": 0,
+      "total_comments_addressed": 0,
+      "review_comments_by_severity": [],
+      "review_comments_by_review_tier": [],
+      "review_comments_by_comment_type": [],
+      "review_comments_by_customization": [],
+      "total_merged_no_human_change_request_after_review": 0
+    }
+  }
+]
+```

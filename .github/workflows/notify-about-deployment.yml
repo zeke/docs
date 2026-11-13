@@ -1,0 +1,54 @@
+name: Notify about production deployment
+
+# The merge queue can batch PRs into one deploy, so this workflow walks back
+# from the deployed commit and tells every PR author when their change reaches production.
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Purge Fastly']
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  find-pr-and-post-comment:
+    if: >-
+      ${{
+        github.repository == 'github/docs-internal' &&
+        (github.event_name != 'workflow_run' ||
+        github.event.workflow_run.conclusion == 'success')
+      }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: ./.github/actions/node-npm-setup
+
+      # The production purge targets changed English page keys.
+      # Give Fastly a short propagation window before finding built PRs.
+      - name: Sleep a little to give Fastly Purge a chance
+        run: sleep 30
+
+      - name: Find PRs and post production comments
+        timeout-minutes: 5
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
+          # Manual Purge Fastly runs carry no deploy, so the script reads /_build instead.
+          DEPLOY_SHA: ${{ github.event.workflow_run.event == 'deployment_status' && github.event.workflow_run.head_sha || '' }}
+        run: npm run find-past-built-pr
+
+      - uses: ./.github/actions/create-workflow-failure-issue
+        id: create-failure-issue
+        if: ${{ failure() }}
+        with:
+          token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+
+      - uses: ./.github/actions/slack-alert
+        if: ${{ failure() }}
+        with:
+          slack_token: ${{ secrets.SLACK_DOCS_BOT_TOKEN }}
+          issue_url: ${{ steps.create-failure-issue.outputs.issue_url }}

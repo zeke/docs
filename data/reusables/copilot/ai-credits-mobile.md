@@ -1,0 +1,5 @@
+If you purchased {% data variables.copilot.copilot_pro_short %}, {% data variables.copilot.copilot_pro_plus_short %}, or {% data variables.copilot.copilot_max_short %} through an in-app purchase on iOS or Android, you can't buy additional {% data variables.product.prodname_ai_credits %} through the app store. However, if your {% data variables.product.github %} account has a payment method on file, additional paid usage beyond your included {% data variables.product.prodname_ai_credits_short %} is billed to that payment method based on your budget settings.
+
+To avoid charges beyond your plan, create or edit a **Bundled {% data variables.product.prodname_ai_credits_short %} budget**, set it to $0 USD, and enable **Stop usage when budget limit is reached**. See [AUTOTITLE](/billing/how-tos/set-up-budgets#managing-budgets-for-your-personal-account).
+
+To manage all {% data variables.product.prodname_copilot_short %} billing in one place, cancel your mobile subscription in the App Store or Google Play and re-subscribe on {% data variables.product.prodname_dotcom_the_website %}.

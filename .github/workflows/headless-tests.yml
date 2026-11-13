@@ -1,0 +1,62 @@
+name: Headless Tests
+
+# Browser tests cover client-side JavaScript behavior that static Vitest tests miss.
+
+on:
+  workflow_dispatch:
+  merge_group:
+  pull_request:
+
+permissions:
+  contents: read
+
+# Cancel older runs for the same ref to save runner time.
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+env:
+  ELASTICSEARCH_URL: http://localhost:9200/
+
+jobs:
+  playwright-tests:
+    if: github.repository == 'github/docs-internal' || github.repository == 'github/docs'
+    runs-on: ubuntu-latest
+    strategy:
+      # Keep Playwright variants as separate checks while a11y false-positive rates settle.
+      matrix:
+        node:
+          - playwright-rendering
+          - playwright-header
+          - playwright-a11y
+          - playwright-secret-scanning
+      fail-fast: false
+    timeout-minutes: 60
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: ./.github/actions/setup-elasticsearch
+
+      - uses: ./.github/actions/node-npm-setup
+
+      - uses: ./.github/actions/cache-nextjs
+
+      - name: Run build script
+        run: npm run build
+
+      - name: Index fixtures into the local Elasticsearch
+        run: npm run index-test-fixtures
+
+      - name: Install headless browser
+        run: npx playwright install --no-shell
+
+      - name: Run Playwright tests
+        env:
+          PLAYWRIGHT_WORKERS: ${{ fromJSON('[1, 4]')[github.repository == 'github/docs-internal'] }}
+          # Supported Node runtimes can hit https://github.com/nodejs/node/issues/59364 without this flag.
+          NODE_OPTIONS: '--no-experimental-strip-types'
+          PLAYWRIGHT_TIMEOUT: ${{ matrix.node == 'playwright-a11y' && '60000' || '' }}
+
+        # Keep a11y scans in a distinct check so branch protection can leave them non-blocking.
+        run: npm run playwright-test -- ${{ matrix.node }} --reporter list

@@ -1,0 +1,50 @@
+name: Clone translations
+
+description: Clone all remote translations so they're available
+
+inputs:
+  token:
+    description: PAT
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    # Clone in parallel; sequential actions/checkout steps took about 30s.
+    - name: Clone all translations
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        TOKEN: ${{ inputs.token }}
+      run: |
+        auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')
+        echo "::add-mask::$auth"
+        # Pass auth through the environment so the token stays out of process
+        # arguments and out of the clones' git config.
+        export GIT_CONFIG_COUNT=1
+        export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+        export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+
+        clone() {
+          local lang=$1
+          for attempt in 1 2 3; do
+            rm -rf "translations/$lang"
+            git clone --quiet --depth 1 "https://github.com/github/docs-internal.$lang.git" "translations/$lang" \
+              && return 0
+            echo "Clone of $lang failed on attempt $attempt"
+            sleep $((attempt * 5))
+          done
+          return 1
+        }
+
+        pids=()
+        for lang in es-es ja-jp pt-br zh-cn ru-ru fr-fr ko-kr de-de; do
+          clone "$lang" &
+          pids+=($!)
+        done
+
+        status=0
+        for pid in "${pids[@]}"; do
+          wait "$pid" || status=1
+        done
+        exit $status

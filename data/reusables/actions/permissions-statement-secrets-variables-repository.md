@@ -1,0 +1,1 @@
+To create secrets or variables on {% data variables.product.prodname_dotcom %} for an organization repository, you must have `write` access. For a personal account repository, you must be a repository collaborator.

@@ -1,0 +1,2 @@
+{% ifversion ghes %}
+Enterprise owners can configure the dependency graph and {% data variables.product.prodname_dependabot_alerts %} for an enterprise. For more information, see [AUTOTITLE](/code-security/how-tos/secure-at-scale/configure-enterprise-security/configure-specific-tools/enable-dependency-graph) and [AUTOTITLE](/admin/configuring-settings/configuring-github-connect/enabling-dependabot-for-your-enterprise).{% endif %}

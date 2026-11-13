@@ -1,0 +1,113 @@
+---
+title: '{% data variables.copilot.copilot_cli %}'
+shortTitle: '{% data variables.copilot.copilot_cli_short %}'
+intro: Use {% data variables.product.prodname_copilot_short %} directly from your terminal to answer questions, write and debug code, and interact with {% data variables.product.github %}.
+versions:
+  feature: copilot
+redirect_from:
+  - /copilot/concepts/agents/copilot-cli
+  - /copilot/github-copilot-in-the-cli
+  - /copilot/github-copilot-in-the-cli/configuring-github-copilot-in-the-cli
+  - /copilot/github-copilot-in-the-cli/using-github-copilot-in-the-cli
+  - /copilot/using-github-copilot/using-github-copilot-in-the-cli
+  - /copilot/using-github-copilot/using-github-copilot-in-the-command-line
+  - /copilot/how-tos/github-flow
+  - /copilot/how-tos/github-flow/use-copilot-in-the-cli
+  - /copilot/how-tos/github-flow/using-github-copilot-in-the-command-line
+  - /copilot/how-tos/configure-personal-settings/customize-copilot-in-the-cli
+  - /copilot/how-tos/use-copilot-for-common-tasks
+  - /copilot/how-tos/use-copilot-for-common-tasks/use-copilot-in-the-cli
+contentType: how-tos
+layout: bespoke-landing
+heroImage: /assets/images/banner-images/hero-4
+sidebarLink:
+  text: All articles
+  href: /copilot/how-tos/copilot-cli
+introLinks:
+  overview: /copilot/concepts/copilot-surfaces/copilot-cli
+  quickstart: /copilot/get-started/cli-quickstart
+children:
+  - /cli-best-practices
+  - /set-up-copilot-cli
+  - /use-copilot-cli
+  - /automate-copilot-cli
+  - /customize-copilot
+  - /administer-copilot-cli-for-your-enterprise
+  - /use-copilot-cli-in-actions
+  - /automate-copilot-cli/automate-with-actions
+  - /automate-copilot-cli/quickstart
+  - /automate-copilot-cli/run-cli-programmatically
+  - /automate-copilot-cli/schedule-prompts
+  - /content/copilot/concepts/customizations/agent-skills
+  - /content/copilot/concepts/customizations/plugins
+  - /content/copilot/concepts/copilot-surfaces/copilot-cli
+  - /content/copilot/concepts/agent-capabilities/agent-powered-workflows-and-operations/dynamic-workflows
+  - /content/copilot/concepts/customizations/custom-agents
+  - /content/copilot/concepts/agent-capabilities/agent-powered-workflows-and-operations/about-remote-control
+  - /content/copilot/concepts/customizations/comparing-customizations
+  - /content/copilot/concepts/prompting-and-context/context-management
+  - /content/copilot/concepts/agent-capabilities/agent-powered-workflows-and-operations/tool-search
+  - /content/copilot/concepts/agent-capabilities/choosing-and-delegating-agent-work/delegating-and-parallelizing-work-with-agents
+  - /content/copilot/concepts/customizations/lsp-servers
+  - /use-copilot-cli/research-with-copilot-cli
+  - /content/copilot/concepts/agent-capabilities/choosing-and-delegating-agent-work/getting-a-second-opinion
+  - /content/copilot/concepts/customizations/extensions
+  - /content/copilot/how-tos/use-copilot-agents/use-dynamic-workflows
+  - /content/copilot/reference/copilot-cli-reference/acp-server
+  - /content/copilot/reference/copilot-cli-reference/cli-command-reference
+  - /content/copilot/reference/copilot-cli-reference/cli-plugin-reference
+  - /content/copilot/reference/copilot-cli-reference/cli-programmatic-reference
+  - /content/copilot/concepts/security-governance-and-network-settings/session-data
+  - /content/copilot/reference/hooks-reference
+  - /content/copilot/responsible-use/agents
+  - /content/copilot/tutorials/copilot-cli-hooks
+  - /customize-copilot/add-custom-instructions
+  - /customize-copilot/add-mcp-servers
+  - /customize-copilot/add-skills
+  - /customize-copilot/create-custom-agents-for-cli
+  - /customize-copilot/change-settings
+  - /customize-copilot/overview
+  - /customize-copilot/plugins-creating
+  - /customize-copilot/plugins-finding-installing
+  - /customize-copilot/add-llm-models
+  - /customize-copilot/use-hooks
+  - /set-up-copilot-cli/add-lsp-servers
+  - /set-up-copilot-cli/authenticate-copilot-cli
+  - /set-up-copilot-cli/configure-copilot-cli
+  - /set-up-copilot-cli/install-copilot-cli
+  - /set-up-copilot-cli/troubleshoot-copilot-cli-auth
+  - /use-copilot-cli/agentic-code-review
+  - /use-copilot-cli/allowing-tools
+  - /use-copilot-cli/voice-input
+  - /use-copilot-cli/use-autopilot-mode
+  - /content/copilot/concepts/agent-capabilities/agent-powered-workflows-and-operations/autopilot
+  - /use-copilot-cli/chronicle
+  - /use-copilot-cli/connecting-vs-code
+  - /use-copilot-cli/delegate-tasks-to-cca
+  - /use-copilot-cli/browse-issues-prs-gists
+  - /use-copilot-cli/invoke-custom-agents
+  - /use-copilot-cli/manage-pull-requests
+  - /use-copilot-cli/overview
+  - /use-copilot-cli/roll-back-changes
+  - /use-copilot-cli/speed-up-task-completion
+  - /use-copilot-cli/steer-agents
+  - /use-copilot-cli/steer-remotely
+  - /use-copilot-cli/set-session-limit
+  - /use-copilot-cli/ask-a-side-question
+  - /use-copilot-cli/choose-a-model
+  - /use-copilot-cli/computer-use
+  - /use-copilot-cli/work-with-multiple-sessions
+carousels:
+  recommended:
+    - /copilot/how-tos/copilot-cli/use-copilot-cli/overview
+    - /copilot/how-tos/copilot-cli/cli-best-practices
+    - /copilot/reference/copilot-cli-reference/cli-command-reference
+includedCategories:
+  - Quickstarts
+  - Learn about Copilot CLI
+  - Configure Copilot CLI
+  - Build with Copilot CLI
+  - Administer Copilot CLI
+docsTeamMetrics:
+  - copilot-cli
+---

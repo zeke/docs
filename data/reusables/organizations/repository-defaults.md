@@ -1,2 +1,1 @@
-1. In the left sidebar, click **Repository defaults**.
-  ![Repository defaults tab](/assets/images/help/organizations/repo-defaults-tab.png)
+1. {% data reusables.user-settings.code-planning-automation %} select **{% octicon "repo" aria-hidden="true" aria-label="repo" %} Repository**, then click **General**.

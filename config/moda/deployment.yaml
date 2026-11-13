@@ -1,0 +1,231 @@
+# Moda deployment reference:
+# https://thehub.github.com/epd/engineering/products-and-services/internal/moda/reference/deployment-yaml/
+
+environments:
+  - name: production
+    require_pipeline: true
+    # Allow extra rollout time because pod scheduling can exceed Moda's default timeout.
+    timeout: 1200
+    cluster_selector:
+      profile: general
+      region: iad
+
+  # All 15 evergreen staging environments must contain the same configs.
+  - name: staging-balsam
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':balsam: Review at https://docs-internal-staging-balsam.githubapp.com/'
+
+  - name: staging-boxwood
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':boxwood: Review at https://docs-internal-staging-boxwood.githubapp.com/'
+
+  - name: staging-cedar
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':cedar: Review at https://docs-internal-staging-cedar.githubapp.com/'
+
+  - name: staging-cypress
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':cypress: Review at https://docs-internal-staging-cypress.githubapp.com/'
+
+  - name: staging-fir
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':fir: Review at https://docs-internal-staging-fir.githubapp.com/'
+
+  - name: staging-hemlock
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':hemlock: Review at https://docs-internal-staging-hemlock.githubapp.com/'
+
+  - name: staging-hinoki
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':hinoki: Review at https://docs-internal-staging-hinoki.githubapp.com/'
+
+  - name: staging-holly
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':holly_: Review at https://docs-internal-staging-holly.githubapp.com/'
+
+  - name: staging-juniper
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':juniper: Review at https://docs-internal-staging-juniper.githubapp.com/'
+
+  - name: staging-laurel
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':laurel: Review at https://docs-internal-staging-laurel.githubapp.com/'
+
+  - name: staging-pine
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':pine: Review at https://docs-internal-staging-pine.githubapp.com/'
+
+  - name: staging-redwood
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':redwood: Review at https://docs-internal-staging-redwood.githubapp.com/'
+
+  - name: staging-sequoia
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':sequoia: Review at https://docs-internal-staging-sequoia.githubapp.com/'
+
+  - name: staging-spruce
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':spruce: Review at https://docs-internal-staging-spruce.githubapp.com/'
+
+  - name: staging-yew
+    require_pipeline: false
+    notify_still_locked: true # Notify last person to lock this after an hour
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: true
+    skip_auto_merge: true
+    cluster_selector:
+      profile: general
+      region: iad
+    extra_completed_message: ':yew: Review at https://docs-internal-staging-yew.githubapp.com/'
+
+  - name: docs-internal-review-lab
+    require_pipeline: false
+    require_vault: true
+    secret_environment: staging
+    required_review_tasks: []
+    auto_deploy: false
+    skip_auto_merge: true
+    proxima: true
+    resource_path: config/kubernetes/docs-internal-review-lab
+    url: https://docs-internal-{{BRANCH}}.octoca.ts.net
+    timeout: 900
+    cluster_selector:
+      name: rl-1-test-cnc-01-az1
+    extra_completed_message: 'Review at {{ENVIRONMENT_URL}}. The lab expires 7 days after you created it, and updates do not extend that. To deploy new commits, run `.proxima-review-lab update <lab-name>` in #dotcom-environment-ops, using the lab name from your create command.'
+
+required_builds:
+  - docs-internal-moda-config-bundle / docs-internal-moda-config-bundle
+  - docs-internal-docker-image / docs-internal-docker-image
+  - docs-internal-docker-security / docs-internal-docker-security
+
+# Start the production rollout pipeline when a PR enters the merge queue.
+auto_start_pipeline: production_rollout
+
+pipelines:
+  production_rollout:
+    thread_notifications: true
+    notify_users_via_dm: false
+    timeout: 1800
+    stages:
+      - name: full_production
+        kind: deployment
+        config:
+          environment: production
+          timeout: 1800
+
+notifications:
+  slack_channels:
+    - '#docs-ops'

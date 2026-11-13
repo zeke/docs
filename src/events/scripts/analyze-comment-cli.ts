@@ -1,0 +1,67 @@
+// Debug comment signals with npm run analyze-comment -- "I love this site\!" --verbose.
+// Pipe a file to npm run analyze-comment to read the comment from stdin.
+
+import fs from 'node:fs'
+import util from 'node:util'
+
+import chalk from 'chalk'
+import { program } from 'commander'
+
+import { SIGNAL_RATINGS } from '../lib/analyze-comment'
+
+type Options = {
+  language?: string
+  verbose?: boolean
+}
+program
+  .description('Analyze a single comment to test how it would be rated.')
+  .option('-l, --language <language>', 'Assumed language of the page')
+  .option('-v, --verbose', "Display all signals it *didn't* trigger")
+  .argument('[comment]', 'Input (leave blank to read from stdin)')
+  .action(main)
+
+program.parse(process.argv)
+
+async function main(comment?: string, options?: Options) {
+  if (!comment) {
+    const stdinBuffer = fs.readFileSync(0) // File descriptor 0 reads stdin.
+    comment = stdinBuffer.toString()
+  }
+  if (!comment.trim()) {
+    console.error(chalk.red('No comment provided'))
+    return process.exit(1)
+  }
+
+  console.log(chalk.grey('Comment:'), chalk.bold(util.inspect(comment)))
+  console.log()
+
+  const language = options?.language || 'en'
+
+  let rating = 1.0
+  let broke = false
+  for (const { reduction, name, validator } of SIGNAL_RATINGS) {
+    const hit = await validator(comment, language)
+    if (hit) {
+      console.log(
+        chalk.yellow(
+          `Triggered on ${chalk.bold(name)} (${chalk.bold(reduction.toFixed(1))} reduction)`,
+        ),
+      )
+      rating -= reduction
+      if (rating <= 0) {
+        console.log(chalk.red('Rating is now 0.0, stopping'))
+        broke = true
+        if (options?.verbose) {
+          break
+        }
+      }
+    } else if (options?.verbose) {
+      console.log(chalk.green(`Not triggered on ${chalk.bold(name)}`))
+    }
+  }
+
+  console.log()
+  if (!broke) {
+    console.log(chalk.whiteBright(`Final rating: ${chalk.bold(rating.toFixed(1))}`))
+  }
+}

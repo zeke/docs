@@ -1,0 +1,443 @@
+import Cookies from '@/frame/components/lib/cookies'
+import {
+  ANALYTICS_ENABLED,
+  ANNOTATE_MODE_COOKIE_NAME,
+  DOCS_EVENTS_COOKIE_NAME,
+  TOOL_PREFERRED_COOKIE_NAME,
+  OS_PREFERRED_COOKIE_NAME,
+} from '@/frame/lib/constants'
+import { parseUserAgent } from './user-agent'
+import { Router } from 'next/router'
+import { isLoggedIn } from '@/frame/components/hooks/useHasAccount'
+import { getExperimentVariationForContext } from './experiments/experiment'
+import { EventType, EventPropsByType } from '../types'
+import { isHeadless } from './is-headless'
+import { sendHydroAnalyticsEvent, getOctoClientId } from './hydro-analytics'
+
+const BATCH_INTERVAL = 5000 // Flush queued events every 5 seconds.
+
+let initialized = false
+let cookieValue: string | undefined
+let pageEventId: string | undefined
+
+let sentExit = false
+let pauseScrolling = false
+let scrollPosition = 0
+let scrollDirection = 1
+let scrollFlipCount = 0
+let maxScrollY = 0
+let pageStartTime = Date.now()
+// Navigation timings belong to the full page load, so pages reached by client-side navigation omit them.
+let isFullPageLoad = true
+// document.referrer keeps the landing page's referrer through client-side navigation.
+let pageReferrer: string | undefined
+let hoveredUrls = new Set()
+let eventQueue: Record<string, unknown>[] = []
+// Next cancels a route without its routeChangeComplete, so a cancelled wait resolves with the next route and must not send a page event.
+let pageReadyNavigation = 0
+
+function scheduleNextFlush() {
+  setTimeout(() => {
+    flushQueue()
+    scheduleNextFlush()
+  }, BATCH_INTERVAL)
+}
+
+scheduleNextFlush()
+
+function resetPageParams() {
+  sentExit = false
+  pauseScrolling = false
+  scrollPosition = 0
+  scrollDirection = 1
+  scrollFlipCount = 0
+  maxScrollY = 0
+  pageStartTime = Date.now()
+  isFullPageLoad = false
+  hoveredUrls = new Set()
+}
+
+// Use crypto.randomUUID when available; fall back in contexts where the call fails.
+export function uuidv4(): string {
+  try {
+    return crypto.randomUUID()
+  } catch {
+    // https://stackoverflow.com/a/2117523
+    return (String([1e7]) + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: string) =>
+      (
+        Number(c) ^
+        (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (Number(c) / 4)))
+      ).toString(16),
+    )
+  }
+}
+
+export function getUserEventsId() {
+  if (cookieValue) return cookieValue
+  cookieValue = Cookies.get(DOCS_EVENTS_COOKIE_NAME)
+  if (cookieValue) return cookieValue
+  cookieValue = uuidv4()
+  Cookies.set(DOCS_EVENTS_COOKIE_NAME, cookieValue)
+  return cookieValue
+}
+
+function getMetaContent(name: string) {
+  const metaTag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement
+  return metaTag?.content
+}
+
+export function sendEvent<T extends EventType>({
+  type,
+  version = '1.0.0',
+  eventGroupKey,
+  eventGroupId,
+  ...props
+}: {
+  type: T
+  version?: string
+  eventGroupKey?: string
+  eventGroupId?: string
+} & EventPropsByType[T]) {
+  const body = {
+    type,
+
+    context: {
+      event_id: uuidv4(),
+      user: getUserEventsId(),
+      version,
+      created: new Date().toISOString(),
+      page_event_id: pageEventId,
+
+      referrer: pageReferrer ?? document.referrer,
+      title: document.title,
+      href: location.href,
+      hostname: location.hostname,
+      path: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      path_language: getMetaContent('path-language'),
+      path_version: getMetaContent('path-version'),
+      path_product: getMetaContent('path-product'),
+      path_article: getMetaContent('path-article'),
+      page_document_type: getMetaContent('page-document-type'),
+      content_type: getMetaContent('page-content-type'),
+      docs_team_metrics: getMetaContent('docs-team-metrics') || undefined,
+      status: Number(getMetaContent('status') || 0),
+      is_logged_in: isLoggedIn(),
+      octo_client_id: getOctoClientId(),
+
+      // Adds os, os_version, browser, and browser_version.
+      ...parseUserAgent(),
+      is_headless: isHeadless(),
+      viewport_width: document.documentElement.clientWidth,
+      viewport_height: document.documentElement.clientHeight,
+      screen_width: window.screen.width,
+      screen_height: window.screen.height,
+      pixel_ratio: window.devicePixelRatio || 1,
+      user_agent: navigator.userAgent,
+
+      timezone: new Date().getTimezoneOffset() / -60,
+      user_language: navigator.language,
+
+      application_preference: Cookies.get(TOOL_PREFERRED_COOKIE_NAME),
+      color_mode_preference: getColorModePreference(),
+      os_preference: Cookies.get(OS_PREFERRED_COOKIE_NAME),
+      code_display_preference: Cookies.get(ANNOTATE_MODE_COOKIE_NAME),
+
+      experiment_variation:
+        getExperimentVariationForContext(
+          getMetaContent('path-language'),
+          getMetaContent('path-version'),
+        ) || '',
+
+      event_group_key: eventGroupKey,
+      event_group_id: eventGroupId,
+    },
+
+    ...props,
+  }
+
+  queueEvent(body)
+
+  // Hydro handles cross-subdomain tracking.
+  if (ANALYTICS_ENABLED) sendHydroAnalyticsEvent(body)
+
+  if (type === EventType.exit) {
+    flushQueue()
+  }
+
+  return body
+}
+
+function flushQueue() {
+  if (!eventQueue.length) return
+
+  const endpoint = '/api/events'
+  const eventsBody = JSON.stringify(eventQueue)
+  eventQueue = []
+
+  try {
+    if (ANALYTICS_ENABLED) {
+      navigator.sendBeacon(endpoint, new Blob([eventsBody], { type: 'application/json' }))
+    }
+  } catch (err) {
+    console.warn(`sendBeacon to '${endpoint}' failed.`, err)
+  }
+}
+
+function queueEvent(eventBody: Record<string, unknown>) {
+  eventQueue.push(eventBody)
+}
+
+function getColorModePreference() {
+  // HTML attributes expose the resolved mode and preserve auto preference without parsing cookies.
+  const html = document.querySelector('html')
+  let color_mode_preference = html?.dataset.colorModePreference || html?.dataset.colorMode
+
+  if (color_mode_preference === 'auto') {
+    if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      color_mode_preference += ':light'
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      color_mode_preference += ':dark'
+    }
+  }
+
+  return color_mode_preference
+}
+
+function getPerformance() {
+  const paint = performance
+    ?.getEntriesByType('paint')
+    ?.find(({ name }) => name === 'first-contentful-paint')
+  const nav = performance?.getEntriesByType('navigation')?.[0] as
+    | PerformanceNavigationTiming
+    | undefined
+  return {
+    firstContentfulPaint: paint ? paint.startTime / 1000 : undefined,
+    domInteractive: nav ? nav.domInteractive / 1000 : undefined,
+    domComplete: nav ? nav.domComplete / 1000 : undefined,
+    render: nav ? Math.max(0, nav.responseEnd - nav.requestStart) / 1000 : undefined,
+  }
+}
+
+function trackScroll() {
+  // Throttle scroll calculations to no more than five per second.
+  if (pauseScrolling) return
+  pauseScrolling = true
+  setTimeout(() => {
+    pauseScrolling = false
+  }, 200)
+
+  const scrollPixels = window.scrollY + window.innerHeight
+  const newScrollPosition = scrollPixels / document.documentElement.scrollHeight
+
+  const newScrollDirection = Math.sign(newScrollPosition - scrollPosition)
+  if (newScrollDirection !== scrollDirection) scrollFlipCount++
+
+  if (newScrollPosition > maxScrollY) maxScrollY = newScrollPosition
+
+  scrollDirection = newScrollDirection
+  scrollPosition = newScrollPosition
+}
+
+function sendPage() {
+  const pageEvent = sendEvent({ type: EventType.page })
+  pageEventId = pageEvent?.context?.event_id
+}
+
+function sendExit() {
+  if (sentExit) return
+  sentExit = true
+  const { render, firstContentfulPaint, domInteractive, domComplete } = isFullPageLoad
+    ? getPerformance()
+    : {}
+
+  const clampedScrollLength = Math.min(maxScrollY, 1)
+
+  return sendEvent({
+    type: EventType.exit,
+    exit_render_duration: render,
+    exit_first_paint: firstContentfulPaint,
+    exit_dom_interactive: domInteractive,
+    exit_dom_complete: domComplete,
+    exit_visit_duration: (Date.now() - pageStartTime) / 1000,
+    exit_scroll_length: clampedScrollLength,
+    exit_scroll_flip: scrollFlipCount,
+  })
+}
+
+function initPageAndExitEvent() {
+  sendPage()
+
+  window.addEventListener('scroll', trackScroll)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      sendExit()
+      // sendExit only flushes the first time, so later hides still need a flush.
+      flushQueue()
+    } else {
+      flushQueue()
+    }
+  })
+
+  Router.events.on('routeChangeStart', async (url) => {
+    // At routeChangeStart, location.pathname is prior and url is upcoming; query/hash keep one page event.
+    const previousPath = location.pathname
+    const newPath = url?.toString().split('?')[0].split('#')[0]
+    const shouldSendEvents = newPath !== previousPath
+    if (shouldSendEvents) {
+      sendExit()
+      const thisNavigation = ++pageReadyNavigation
+      await waitForPageReady()
+      if (thisNavigation !== pageReadyNavigation) return
+      resetPageParams()
+      pageReferrer = location.origin + previousPath
+      sendPage()
+    }
+  })
+}
+
+// Wait for routeChangeComplete and meta-tag mutations so page events include the new page data.
+async function waitForPageReady() {
+  const route = new Promise((resolve) => {
+    const handler = () => {
+      Router.events.off('routeChangeComplete', handler)
+      setTimeout(() => resolve(true))
+    }
+    Router.events.on('routeChangeComplete', handler)
+  })
+  const mutate = new Promise((resolve) => {
+    const observer = new MutationObserver((mutations) => {
+      const metaMutated = mutations.find(
+        (mutation) =>
+          mutation.target?.nodeName === 'META' ||
+          Array.from(mutation.addedNodes).find((node) => node.nodeName === 'META') ||
+          Array.from(mutation.removedNodes).find((node) => node.nodeName === 'META'),
+      )
+      if (metaMutated) {
+        observer.disconnect()
+        setTimeout(() => resolve(true))
+      }
+    })
+    observer.observe(document.getElementsByTagName('head')[0], {
+      subtree: true,
+      childList: true,
+      attributes: true,
+    })
+  })
+  return Promise.all([route, mutate])
+}
+
+function initClipboardEvent() {
+  for (const verb of ['copy', 'cut', 'paste']) {
+    document.documentElement.addEventListener(verb, () => {
+      sendEvent({ type: EventType.clipboard, clipboard_operation: verb })
+    })
+  }
+}
+
+function initCopyButtonEvent() {
+  document.documentElement.addEventListener('click', (evt) => {
+    const target = evt.target as HTMLElement
+    const button = target.closest('.js-btn-copy') as HTMLButtonElement
+    if (!button) return
+
+    sendEvent({
+      type: EventType.clipboard,
+      clipboard_operation: 'copy',
+      clipboard_target: '.js-btn-copy',
+    })
+  })
+}
+
+function initLinkEvent() {
+  document.documentElement.addEventListener('click', (evt) => {
+    const target = evt.target as HTMLElement
+    const link = target.closest('a[href]') as HTMLAnchorElement
+    if (!link) return
+    const sameSite = link.origin === location.origin
+    const container = target.closest(`[data-container]`) as HTMLElement | null
+
+    // Any anchor can set data-group-key and data-group-id to include grouping fields.
+    const eventGroupKey = link?.dataset?.groupKey || undefined
+    const eventGroupId = link?.dataset?.groupId || undefined
+
+    sendEvent({
+      type: EventType.link,
+      link_url: link.href,
+      link_samesite: sameSite,
+      link_samepage: sameSite && link.pathname === location.pathname,
+      link_container: container?.dataset.container,
+      eventGroupKey,
+      eventGroupId,
+    })
+  })
+
+  document.documentElement.addEventListener('click', (evt) => {
+    const target = evt.target as HTMLElement
+    if (!target.closest('.ghd-scroll-to-top')) return
+    const url = window.location.href.split('#')[0]
+    sendEvent({
+      type: EventType.link,
+      link_url: `${url}#scroll-to-top`,
+      link_samesite: true,
+      link_samepage: true,
+      link_container: 'static',
+    })
+  })
+}
+
+function initHoverEvent() {
+  let timer: number | null = null
+  document.documentElement.addEventListener('mouseover', (evt) => {
+    const target = evt.target as HTMLElement
+    const link = target.closest('a[href]') as HTMLAnchorElement | null
+
+    if (!link) return
+
+    // Record hover events only for links inside the content area.
+    const mainContent = document.querySelector('#main-content') as HTMLElement | null
+    if (!mainContent || !mainContent.contains(link)) return
+
+    if (hoveredUrls.has(link.href)) return // Repeated hovers would flood events.
+
+    if (timer) {
+      window.clearTimeout(timer)
+    }
+    timer = window.setTimeout(() => {
+      const sameSite = link.origin === location.origin
+      hoveredUrls.add(link.href)
+      sendEvent({
+        type: EventType.hover,
+        hover_url: link.href,
+        hover_samesite: sameSite,
+      })
+    }, 500)
+  })
+
+  document.documentElement.addEventListener('mouseout', () => {
+    // Any mouseout cancels the pending hover timer.
+    if (timer) {
+      window.clearTimeout(timer)
+    }
+  })
+}
+
+function initPrintEvent() {
+  window.addEventListener('beforeprint', () => {
+    sendEvent({ type: EventType.print })
+  })
+}
+
+export function initializeEvents() {
+  if (!ANALYTICS_ENABLED) return
+  if (initialized) return
+  initialized = true
+  // Page events must start first because sendPage creates pageEventId for later events.
+  initPageAndExitEvent()
+  initLinkEvent()
+  initHoverEvent()
+  initClipboardEvent()
+  initCopyButtonEvent()
+  initPrintEvent()
+}

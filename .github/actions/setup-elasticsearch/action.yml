@@ -1,0 +1,58 @@
+# Callers skip this action for test groups that do not use local Elasticsearch.
+name: Set up local Elasticsearch
+
+description: Install a local Elasticsearch with version that matches prod
+
+inputs:
+  token:
+    description: PAT
+    required: true
+  elasticsearch_version:
+    description: Version of Elasticsearch to install
+    required: true
+    # Version must match production and be published on docker.elastic.co.
+    default: '8.12.0'
+  mode:
+    description: >-
+      'both' starts Elasticsearch and waits until it is ready.
+      'start' starts it in the background and returns right away.
+      'wait' waits for a background start from an earlier 'start' step, then for readiness.
+    required: false
+    default: 'both'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Start Elasticsearch
+      if: ${{ inputs.mode == 'both' }}
+      shell: bash
+      env:
+        ES_VERSION: ${{ inputs.elasticsearch_version }}
+      run: bash "$GITHUB_ACTION_PATH/start.sh"
+
+    # Later steps such as npm ci and the build run while the image pulls and Elasticsearch boots.
+    - name: Start Elasticsearch in the background
+      if: ${{ inputs.mode == 'start' }}
+      shell: bash
+      env:
+        ES_VERSION: ${{ inputs.elasticsearch_version }}
+        ES_STATUS_FILE: ${{ runner.temp }}/elasticsearch-start.status
+        ES_LOG_FILE: ${{ runner.temp }}/elasticsearch-start.log
+      run: |
+        rm -f "$ES_STATUS_FILE"
+        (
+          status=0
+          bash "$GITHUB_ACTION_PATH/start.sh" || status=$?
+          echo "$status" > "$ES_STATUS_FILE.tmp"
+          mv "$ES_STATUS_FILE.tmp" "$ES_STATUS_FILE"
+        ) > "$ES_LOG_FILE" 2>&1 < /dev/null &
+        echo "Starting Elasticsearch in the background. A mode: wait step prints the log."
+
+    - name: Wait for Elasticsearch
+      if: ${{ inputs.mode != 'start' }}
+      shell: bash
+      env:
+        ES_BACKGROUND: ${{ inputs.mode == 'wait' }}
+        ES_STATUS_FILE: ${{ runner.temp }}/elasticsearch-start.status
+        ES_LOG_FILE: ${{ runner.temp }}/elasticsearch-start.log
+      run: bash "$GITHUB_ACTION_PATH/wait.sh"

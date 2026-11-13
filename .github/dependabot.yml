@@ -1,0 +1,59 @@
+version: 2
+
+registries:
+  ghcr:
+    type: docker-registry
+    url: ghcr.io
+    username: PAT
+    password: ${{secrets.BASE_CONTAINER_IMAGE_READER_DEPENDABOT}}
+
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: tuesday
+    cooldown:
+      default-days: 7
+    ignore:
+      # Keep the Elasticsearch client pinned to the server-compatible version.
+      - dependency-name: '@elastic/elasticsearch'
+      - dependency-name: '*'
+        update-types:
+          ['version-update:semver-patch', 'version-update:semver-minor']
+
+  - package-ecosystem: 'github-actions'
+    directories:
+      - '/'
+      - '/.github/actions/*'
+    schedule:
+      interval: weekly
+      day: tuesday
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          ['version-update:semver-patch', 'version-update:semver-minor']
+      - dependency-name: 'github/internal-actions'
+
+  - package-ecosystem: 'docker'
+    registries:
+      - ghcr
+    directories:
+      - '/'
+      - '/.devcontainer'
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    groups:
+      baseImages:
+        patterns:
+          - '*'
+    ignore:
+      - dependency-name: 'node' # Ignore Dockerfile.openapi_decorator's Node image.

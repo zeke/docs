@@ -7,10 +7,11 @@ redirect_from:
   - /github/building-a-strong-community/limiting-interactions-in-your-organization
 versions:
   fpt: '*'
-permissions: Organization owners can limit interactions in an organization.
-topics:
-  - Community
+  ghec: '*'
+permissions: Organization owners and moderators can limit interactions in an organization.
 shortTitle: Limit interactions in org
+category:
+  - Moderate comments and conversations
 ---
 
 ## About temporary interaction limits
@@ -23,24 +24,53 @@ Limiting interactions in your organization enables temporary interaction limits 
 
 Members of the organization are not affected by any of the limit types.
 
-When you enable organization-wide activity limitations, you can't enable or disable interaction limits on individual repositories. For more information on limiting activity for an individual repository, see "[Limiting interactions in your repository](/communities/moderating-comments-and-conversations/limiting-interactions-in-your-repository)."
+When you enable organization-wide activity limitations, you can't enable or disable interaction limits on individual repositories. For more information on limiting activity for an individual repository, see [AUTOTITLE](/communities/moderating-comments-and-conversations/limiting-interactions-in-your-repository).
 
-Organization owners can also block users for a specific amount of time. After the block expires, the user is automatically unblocked. For more information, see "[Blocking a user from your organization](/communities/maintaining-your-safety-on-github/blocking-a-user-from-your-organization)."
+Organization owners and moderators can also block users for a specific amount of time. After the block expires, the user is automatically unblocked. For more information, see [AUTOTITLE](/communities/maintaining-your-safety-on-github/blocking-a-user-from-your-organization).
 
 ## Limiting interactions in your organization
 
-
 {% data reusables.profile.access_org %}
 {% data reusables.profile.org_settings %}
-1. In the organization settings sidebar, click **Moderation settings**.
-  !["Moderation settings" in the organization settings sidebar](/assets/images/help/organizations/org-settings-moderation-settings.png)
-1. Under "Moderation settings", click **Interaction limits**.
-  !["Interaction limits" in the organization settings sidebar](/assets/images/help/organizations/org-settings-interaction-limits.png)
+1. _For organization owners:_ In the "Access" section of the sidebar, select **{% octicon "report" aria-hidden="true" aria-label="report" %} Moderation**, then click **Interaction limits**.
+
+   _For organization moderators:_ In the sidebar, click **Interaction limits**.
+
 {% data reusables.community.set-interaction-limit %}
-  ![Temporary interaction limit options](/assets/images/help/organizations/organization-temporary-interaction-limits-options.png)
+
+{% ifversion pull-request-limit %}
+
+## Limiting concurrent open pull requests for users without write access
+
+Across all public repositories owned by your organization, you can set a maximum number of pull requests that a user without write access can have open at the same time. This limit applies separately to each repository, so a user without write access can have up to the configured maximum number of open pull requests in _each_ public repository owned by the organization, not across the organization as a whole. When a user without write access reaches the limit in a repository, they must close an existing pull request or wait for someone with write access to merge one before they can open a new one.
+
+This setting helps maintainers manage contribution volume by preventing users from opening an excessive number of pull requests, which can overwhelm review queues and trigger unnecessary CI runs. The limit only applies to users without write access—users with write access or higher are not affected.
+
+You can choose whether draft pull requests count toward a user's limit. If you enable **Count draft pull requests toward the limit**, both draft and non-draft open pull requests count toward the maximum. Otherwise, only open, non-draft pull requests count.
+
+Repository-level pull request limit settings override the organization's settings. See [AUTOTITLE](/communities/moderating-comments-and-conversations/limiting-interactions-in-your-repository#limiting-concurrent-open-pull-requests-for-users-without-write-access).
+
+### Automatically exempting established contributors
+
+{% data reusables.community.pull-request-limit-exemptions %}
+
+### Configuring the pull request limit
+
+To configure the pull request limit, navigate to the **Interaction limits** settings page following the same steps described in [Limiting interactions in your organization](#limiting-interactions-in-your-organization), then:
+
+1. Under **Pull request limits**, select the maximum number of concurrent open pull requests allowed for users without write access.
+1. Optionally, select **Count draft pull requests toward the limit** to include draft pull requests in the maximum.
+1. Optionally, enable **Exempt users based on account age** and set the minimum account age in days.
+1. Optionally, enable **Exempt users based on merged pull requests** and set the minimum number of merged pull requests required for exemption. A contributor's merged pull requests are counted separately for each repository.
+
+You can also use the REST API to configure the pull request limit. See [AUTOTITLE](/rest/interactions/orgs#update-pull-request-creation-cap-for-an-org).
+
+{% endif %}
 
 ## Further reading
-- "[Reporting abuse or spam](/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam)"
-- "[Managing an individual's access to an organization repository](/articles/managing-an-individual-s-access-to-an-organization-repository)"
-- "[Permission levels for a user account repository](/articles/permission-levels-for-a-user-account-repository)"
-- "[Repository permission levels for an organization](/articles/repository-permission-levels-for-an-organization)"
+
+* [AUTOTITLE](/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam)
+* [AUTOTITLE](/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/managing-an-individuals-access-to-an-organization-repository)
+* [AUTOTITLE](/repositories/managing-your-repositorys-settings-and-features/repository-access-and-collaboration/permission-levels-for-a-personal-account-repository)
+* [AUTOTITLE](/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization)
+* [AUTOTITLE](/organizations/managing-peoples-access-to-your-organization-with-roles/managing-moderators-in-your-organization)

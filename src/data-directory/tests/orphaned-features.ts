@@ -1,0 +1,204 @@
+import { fileURLToPath } from 'url'
+import path from 'path'
+import fs from 'fs'
+
+import { describe, expect, test } from 'vitest'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const fixturesDir = path.join(__dirname, 'orphaned-features', 'fixtures')
+
+const { getVariableFiles, getReusableFiles, getEnglishDataFiles, getPageSearchText, checkString } =
+  await import('@/data-directory/scripts/find-orphaned-features/find')
+
+describe('orphaned features detection', () => {
+  test('getVariableFiles finds all yml files in variables directory', () => {
+    const variablesDir = path.join(fixturesDir, 'data', 'variables')
+    const variableFiles = getVariableFiles(variablesDir)
+
+    expect(variableFiles).toHaveLength(1)
+    expect(variableFiles[0]).toMatch(/test\.yml$/)
+
+    const testVariableContent = fs.readFileSync(variableFiles[0], 'utf-8')
+    expect(testVariableContent).toContain('used-in-variables')
+    expect(testVariableContent).toContain('ifversion')
+  })
+
+  test('getReusableFiles finds all md files in reusables directory', () => {
+    const reusablesDir = path.join(fixturesDir, 'data', 'reusables')
+    const reusableFiles = getReusableFiles(reusablesDir)
+
+    expect(reusableFiles).toHaveLength(1)
+    expect(reusableFiles[0]).toMatch(/test\.md$/)
+
+    const testReusableContent = fs.readFileSync(reusableFiles[0], 'utf-8')
+    expect(testReusableContent).toContain('used-in-reusables')
+    expect(testReusableContent).toContain('ifversion')
+  })
+
+  test('variables files contain feature references that should be detected', () => {
+    const variablesDir = path.join(fixturesDir, 'data', 'variables')
+    const testVariableFile = path.join(variablesDir, 'test.yml')
+
+    expect(fs.existsSync(testVariableFile)).toBe(true)
+
+    const content = fs.readFileSync(testVariableFile, 'utf-8')
+
+    expect(content).toContain('{% ifversion used-in-variables %}')
+    expect(content).toContain('test_variable_with_feature')
+    expect(content).toContain('complex_variable')
+  })
+
+  test('helper functions handle nested directories', () => {
+    const tempDir = path.join(__dirname, 'temp-nested-test')
+    const nestedVariablesDir = path.join(tempDir, 'variables', 'nested')
+    const nestedReusablesDir = path.join(tempDir, 'reusables', 'nested')
+
+    fs.mkdirSync(nestedVariablesDir, { recursive: true })
+    fs.mkdirSync(nestedReusablesDir, { recursive: true })
+
+    fs.writeFileSync(path.join(nestedVariablesDir, 'nested.yml'), 'test: value')
+    fs.writeFileSync(path.join(nestedReusablesDir, 'nested.md'), '# Test content')
+    fs.writeFileSync(path.join(tempDir, 'variables', 'root.yml'), 'root: value')
+    fs.writeFileSync(path.join(tempDir, 'reusables', 'root.md'), '# Root content')
+
+    try {
+      const variableFiles = getVariableFiles(path.join(tempDir, 'variables'))
+      expect(variableFiles).toHaveLength(2)
+      expect(variableFiles.some((f) => f.includes('nested.yml'))).toBe(true)
+      expect(variableFiles.some((f) => f.includes('root.yml'))).toBe(true)
+
+      const reusableFiles = getReusableFiles(path.join(tempDir, 'reusables'))
+      expect(reusableFiles).toHaveLength(2)
+      expect(reusableFiles.some((f) => f.includes('nested.md'))).toBe(true)
+      expect(reusableFiles.some((f) => f.includes('root.md'))).toBe(true)
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  test('helper functions ignore non-target files', () => {
+    const tempDir = path.join(__dirname, 'temp-mixed-files')
+    fs.mkdirSync(tempDir, { recursive: true })
+
+    fs.writeFileSync(path.join(tempDir, 'test.yml'), 'yml: content')
+    fs.writeFileSync(path.join(tempDir, 'test.md'), '# MD content')
+    fs.writeFileSync(path.join(tempDir, 'test.json'), '{"json": true}')
+    fs.writeFileSync(path.join(tempDir, 'test.txt'), 'text content')
+    fs.writeFileSync(path.join(tempDir, 'README.yml'), 'readme: content')
+    fs.writeFileSync(path.join(tempDir, 'README.md'), '# README')
+
+    try {
+      const variableFiles = getVariableFiles(tempDir)
+      expect(variableFiles).toHaveLength(1)
+      expect(variableFiles[0]).toMatch(/test\.yml$/)
+
+      const reusableFiles = getReusableFiles(tempDir)
+      expect(reusableFiles).toHaveLength(1)
+      expect(reusableFiles[0]).toMatch(/test\.md$/)
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  test('verify fix addresses the original issue scenario', () => {
+    const variablesDir = path.join(fixturesDir, 'data', 'variables')
+    const featuresDir = path.join(fixturesDir, 'data', 'features')
+
+    expect(fs.existsSync(path.join(featuresDir, 'used-in-variables.yml'))).toBe(true)
+    expect(fs.existsSync(path.join(featuresDir, 'truly-orphaned.yml'))).toBe(true)
+
+    const variableContent = fs.readFileSync(path.join(variablesDir, 'test.yml'), 'utf-8')
+    expect(variableContent).toContain('used-in-variables')
+
+    const variableFiles = getVariableFiles(variablesDir)
+    expect(variableFiles.length).toBeGreaterThan(0)
+
+    const foundFeatureUsage = variableFiles.some((filePath) => {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      return content.includes('used-in-variables')
+    })
+
+    expect(foundFeatureUsage).toBe(true)
+  })
+
+  test('functions correctly identify different file types in same directory', () => {
+    const tempDir = path.join(__dirname, 'temp-mixed-target-files')
+    fs.mkdirSync(tempDir, { recursive: true })
+
+    fs.writeFileSync(
+      path.join(tempDir, 'variables.yml'),
+      'var: {% ifversion test-feature %}enabled{% endif %}',
+    )
+    fs.writeFileSync(
+      path.join(tempDir, 'reusable.md'),
+      '{% ifversion test-feature %}Reusable content{% endif %}',
+    )
+    fs.writeFileSync(path.join(tempDir, 'other.txt'), 'other content')
+
+    try {
+      const variableFiles = getVariableFiles(tempDir)
+      const reusableFiles = getReusableFiles(tempDir)
+
+      expect(variableFiles).toHaveLength(1)
+      expect(variableFiles[0]).toMatch(/variables\.yml$/)
+
+      expect(reusableFiles).toHaveLength(1)
+      expect(reusableFiles[0]).toMatch(/reusable\.md$/)
+
+      expect(variableFiles.some((f) => f.endsWith('.md'))).toBe(false)
+      expect(reusableFiles.some((f) => f.endsWith('.yml'))).toBe(false)
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true })
+    }
+  })
+
+  test('page frontmatter rendered with Liquid counts as feature usage', () => {
+    const features = new Set([
+      'only-in-permissions',
+      'only-in-product',
+      'only-in-introlinks',
+      'truly-orphaned',
+    ])
+    const page = {
+      markdown: '',
+      title: 'Test page',
+      intro: '',
+      rawPermissions: '{% ifversion only-in-permissions %}a{% else %}b{% endif %}',
+      rawProduct: '{% ifversion only-in-product %}x{% endif %}',
+      rawIntroLinks: { overview: '{% ifversion only-in-introlinks %}/a{% endif %}' },
+    }
+
+    checkString(getPageSearchText(page), features, { languageCode: 'en' })
+
+    expect(Array.from(features)).toEqual(['truly-orphaned'])
+  })
+
+  test('getEnglishDataFiles includes variables, tables, and early access data', () => {
+    const dataRoot = path.join(fixturesDir, 'data')
+    const files = getEnglishDataFiles(dataRoot)
+
+    expect(files.map((filePath) => path.relative(dataRoot, filePath)).sort()).toEqual([
+      path.join('early-access', 'reusables', 'test.md'),
+      path.join('early-access', 'variables', 'test.yml'),
+      path.join('tables', 'test.yml'),
+      path.join('variables', 'test.yml'),
+    ])
+
+    const features = new Set([
+      'used-in-variables',
+      'used-in-tables',
+      'used-in-early-access-variables',
+      'used-in-early-access-reusables',
+      'truly-orphaned',
+    ])
+    for (const filePath of files) {
+      checkString(fs.readFileSync(filePath, 'utf-8'), features, { filePath, languageCode: 'en' })
+    }
+
+    expect(Array.from(features)).toEqual(['truly-orphaned'])
+  })
+
+  test('getEnglishDataFiles skips missing data directories', () => {
+    expect(getEnglishDataFiles(path.join(fixturesDir, 'content'))).toEqual([])
+  })
+})

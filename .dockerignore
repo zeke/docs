@@ -1,0 +1,14 @@
+.devcontainer/
+.git/
+.github/
+.vscode/
+contributing/
+docs/
+docs-early-access/
+node_modules/
+README.md
+tests/
+# Local symlinks to docs-early-access. merge-early-access.sh creates these during the build.
+assets/images/early-access
+content/early-access
+data/early-access

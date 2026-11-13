@@ -1,0 +1,3 @@
+{% data variables.product.prodname_actions %} usage is free for standard {% data variables.product.prodname_dotcom %}-hosted runners in public repositories, and for self-hosted runners. See [AUTOTITLE](/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job#standard-github-hosted-runners-for-public-repositories).
+
+For private repositories, each {% data variables.product.prodname_dotcom %} account receives storage and a monthly included compute usage, depending on the account's plan. The cost of eligible runner usage draws from the included compute usage, which is also available for cloud sandbox compute and memory. Additional usage is billed to your account.

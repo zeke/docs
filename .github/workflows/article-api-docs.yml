@@ -1,0 +1,43 @@
+name: 'Check article-api docs'
+
+# Keeps generated article API docs from falling behind middleware changes.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/article-api/middleware/article.ts'
+      - 'src/article-api/middleware/pagelist.ts'
+      - 'src/article-api/scripts/generate-api-docs.ts'
+      # Manual edits to generated docs must fail this check.
+      - 'src/article-api/README.md'
+      - .github/workflows/article-api-docs.yml
+
+permissions:
+  contents: read
+
+jobs:
+  check-article-api-docs:
+    runs-on: ubuntu-latest
+    if: github.repository == 'github/docs-internal' || github.repository == 'github/docs'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: ./.github/actions/node-npm-setup
+
+      - name: Check that src/article-api/README.md is up-to-date
+        run: npm run generate-article-api-docs
+
+      - name: Fail if it isn't up-to-date
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status
+            git diff
+            echo ""
+            echo ""
+
+            echo "src/article-api/README.md is out of date."
+            echo "Please run 'npm run generate-article-api-docs' and commit the changes."
+            exit 1;
+          fi

@@ -1,0 +1,16 @@
+notAllowed:
+  - '*'
+  - '.devcontainer/**'
+  - '.github/**'
+  - 'data/reusables/rai/**'
+  - '.vscode/**'
+  - 'config/**'
+  - 'contributing/**'
+  - 'src/**'
+  - 'content/actions/how-tos/secure-your-work/security-harden-deployments/**'
+  - 'content/README.md'
+contentTypes:
+  - 'content/**'
+# Lets dorny/paths-filter return only added content files.
+added:
+  - added: 'content/**'

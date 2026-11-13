@@ -1,0 +1,55 @@
+name: Close bad repo-sync PRs
+
+# Closes public PRs from the repo-sync source branch unless the event actor is a GitHub employee.
+
+on:
+  # pull_request_target lets the workflow close forked PRs from the repo-sync source branch.
+  pull_request_target:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  close-invalid-repo-sync-pr:
+    if: ${{ github.repository == 'github/docs' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'repo-sync' }}
+    name: Close if invalid repo-sync PR author
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close pull request if unwanted
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          github-token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+          script: |
+            const { owner, repo } = context.repo
+            const prCreator = context.actor
+            const prNumber = context.issue.number
+
+            try {
+              await github.rest.teams.getMembershipForUserInOrg({
+                org: 'github',
+                team_slug: 'employees',
+                username: prCreator
+              })
+
+              // Skip GitHub employees because the event actor may own legitimate repo-sync work.
+              console.log("PR creator is a GitHub employee")
+              return
+            } catch (err) {
+              // The membership lookup throws for non-employees, so fall through and close the PR.
+            }
+
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number: prNumber,
+              labels: ['invalid'],
+              state: 'closed'
+            })
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: "Please leave this `repo-sync` branch to the robots!\n\nI'm going to close this pull request now, but feel free to open a new issue in the repository!"
+            })

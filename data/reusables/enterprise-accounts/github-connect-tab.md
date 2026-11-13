@@ -1,2 +1,1 @@
-1. In the left sidebar, click **{% data variables.product.prodname_github_connect %}**.
-  ![GitHub Connect tab in the business account settings sidebar](/assets/images/enterprise/business-accounts/settings-github-connect-tab.png)
+1. At the top of the page, click **{% octicon "plug" aria-hidden="true" aria-label="plug" %} {% data variables.product.prodname_github_connect %}**.

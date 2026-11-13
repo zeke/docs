@@ -1,0 +1,1 @@
+If you do not update your runner within {% ifversion fpt or ghec %}63{% else %}30{% endif %} days of a new major, minor, or patch version becoming available, the {% data variables.product.prodname_actions %} service will not assign jobs to it. If a critical security update is required, the service will not assign jobs until the runner is updated.

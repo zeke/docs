@@ -1,0 +1,35 @@
+name: Lint code
+
+# Catch lint, formatting, and type-check failures before merge.
+
+on:
+  workflow_dispatch:
+  merge_group:
+  pull_request:
+
+permissions:
+  contents: read
+
+# Cancel older runs for the same ref to save runner time.
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  lint-code:
+    if: github.repository == 'github/docs-internal' || github.repository == 'github/docs'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: ./.github/actions/node-npm-setup
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run Prettier
+        run: npm run prettier-check
+
+      - name: Run TypeScript
+        run: npm run tsc

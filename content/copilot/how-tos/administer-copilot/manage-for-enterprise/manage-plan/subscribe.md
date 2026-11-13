@@ -1,0 +1,34 @@
+---
+title: Subscribing to GitHub Copilot for your enterprise
+shortTitle: Subscribe
+intro: 'Activate a {% data variables.product.prodname_copilot_short %} plan to manage access and usage across your enterprise.'
+permissions: Enterprise owners
+product: 'Enterprises on {% data variables.product.prodname_ghe_cloud %}'
+versions:
+  feature: copilot
+redirect_from:
+  - /billing/managing-billing-for-github-copilot/managing-your-github-copilot-enterprise-subscription
+  - /copilot/managing-copilot/managing-copilot-for-your-enterprise/subscribing-to-copilot-for-your-enterprise
+  - /copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-the-copilot-subscription-for-your-enterprise/subscribing-to-copilot-for-your-enterprise
+  - /copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-the-copilot-plan-for-your-enterprise/subscribing-to-copilot-for-your-enterprise
+  - /copilot/how-tos/administer/enterprises/managing-the-copilot-plan-for-your-enterprise/subscribing-to-copilot-for-your-enterprise
+  - /copilot/how-tos/administer/enterprises/managing-the-copilot-plan-for-your-enterprise/subscribe
+  - /copilot/how-tos/administer/enterprises/manage-plan/subscribe
+  - /copilot/how-tos/administer/manage-for-enterprise/manage-plan/subscribe
+contentType: how-tos
+category: 
+  - Manage Copilot for a team
+---
+
+{% data reusables.copilot.plans.subscribe-for-enterprise %}
+
+>[!NOTE] {% data reusables.copilot.signup-procedure-enterprise-msft-ea %}
+
+## Next steps
+
+* To finish setting up {% data variables.product.prodname_copilot_short %} for your enterprise, see [AUTOTITLE](/copilot/how-tos/copilot-on-github/set-up-copilot/enable-copilot/set-up-for-enterprise).
+* For billing information, see [AUTOTITLE](/billing/concepts/product-billing/github-copilot-licenses) and [AUTOTITLE](/billing/get-started).
+
+## Further reading
+
+* [AUTOTITLE](/copilot/get-started/plans)

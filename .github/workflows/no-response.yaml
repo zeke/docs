@@ -1,28 +1,43 @@
-name: No Response
+name: Stale check for no response from author
 
-# **What it does**: Closes issues that don't have enough information to be
-#                   actionable.
-# **Why we have it**: To remove the need for maintainers to remember to check
-#                     back on issues periodically to see if contributors have
-#                     responded.
-# **Who does it impact**: Everyone that works on docs or docs-internal.
+# Public issues and PRs with no author response close after stale reminders
+# so maintainers do not recheck them manually.
 
 on:
   issue_comment:
     types: [created]
 
   schedule:
-    # Schedule for five minutes after the hour every hour
-    - cron: '5 * * * *'
+    - cron: '20 16 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   noResponse:
     runs-on: ubuntu-latest
+    # Only run in the public repo, and skip automated comments.
+    # Bot-authored issue_comment events are workflow chatter, not author responses.
+    # Scheduled runs often have a bot actor, so the actor check skips only comments.
+    if: >-
+      github.repository == 'github/docs' &&
+      (github.event_name != 'issue_comment' ||
+      (github.actor != 'docs-bot' &&
+      github.actor != 'github-actions' &&
+      !endsWith(github.actor, '[bot]')))
     steps:
-      - uses: lee-dohm/no-response@9bb0a4b5e6a45046f00353d5de7d90fb8bd773bb
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        id: stale
         with:
-          token: ${{ github.token }}
-          closeComment: >
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          only-labels: 'more-information-needed'
+
+          days-before-issue-stale: 21
+          days-before-issue-close: 1
+          stale-issue-label: 'Waiting on contributor'
+          close-issue-message: >
             This issue has been automatically closed because there has been no response
             to our request for more information from the original author. With only the
             information that is currently in the issue, we don't have enough information
@@ -30,3 +45,33 @@ jobs:
             that we can investigate further. See [this blog post on bug reports and the
             importance of repro steps](https://www.lee-dohm.com/2015/01/04/writing-good-bug-reports/)
             for more information about the kind of information that may be helpful.
+
+          days-before-pr-stale: 21
+          days-before-pr-close: 1
+          stale-pr-label: 'Waiting on contributor'
+          close-pr-message: >
+            This PR has been automatically closed because there has been no response to
+            to our request for more information from the original author. Please reach out
+            if you have the information we requested, or open an [issue](https://github.com/github/docs/issues/new/choose)
+            to describe your changes. Then we can reopen this PR and begin the review process.
+
+      - name: Print outputs
+        env:
+          STALED: ${{ steps.stale.outputs.staled-issues-prs || '0' }}
+          CLOSED: ${{ steps.stale.outputs.closed-issues-prs || '0' }}
+        run: echo "Staled issues/PRs:${STALED}, Closed issues/PRs:${CLOSED}"
+
+      - name: Check out repo
+        if: ${{ failure() }}
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: ./.github/actions/create-workflow-failure-issue
+        id: create-failure-issue
+        if: ${{ failure() }}
+        with:
+          token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+
+      - uses: ./.github/actions/slack-alert
+        if: ${{ failure() }}
+        with:
+          slack_token: ${{ secrets.SLACK_DOCS_BOT_TOKEN }}
+          issue_url: ${{ steps.create-failure-issue.outputs.issue_url }}

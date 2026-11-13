@@ -1,25 +1,26 @@
 name: Triage new issue comments
 
-# **What it does**:
-# **Why we have it**:
-# **Who does it impact**:
+# Labels public issues for triage when external contributors add new comments.
 
 on:
   issue_comment:
     types:
       - created
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   triage-issue-comments:
-    if: github.repository == 'github/docs' && github.event.issue.pull_request == null
+    if: ${{ github.repository == 'github/docs' && !github.event.issue.pull_request }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Check if the event originated from a team member
-        uses: actions/github-script@2b34a689ec86a68d8ab9478298f91d5401337b7d
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         id: is-internal-contributor
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
             const repo = context.payload.repository.name
@@ -38,15 +39,40 @@ jobs:
               console.log(`This issue was commented on by an external contributor.`)
               return 'false'
             }
+
+      - name: Check out repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: ./.github/actions/node-npm-setup
+
+      - name: Check issue exists
+        id: exists
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: |
+          if gh issue view $ISSUE_URL > /dev/null 2>&1
+          then
+            echo "exists=y" >> $GITHUB_OUTPUT
+          else
+            echo "exists=n" >> $GITHUB_OUTPUT
+          fi
+
       - name: Label issues with new comments with 'triage'
-        uses: rachmari/labeler@832d42ec5523f3c6d46e8168de71cd54363e3e2e
-        if: (steps.is-internal-contributor.outputs.result == 'false')
+        uses: ./.github/actions/labeler
+        if: ${{ steps.is-internal-contributor.outputs.result == 'false' && steps.exists.outputs.exists == 'y' }}
         with:
-          repo-token: '${{ secrets.GITHUB_TOKEN }}'
-          add-labels: 'triage'
-      - name: Triage to project board
-        uses: rachmari/actions-add-new-issue-to-column@1a459ef92308ba7c9c9dc2fcdd72f232495574a9
+          addLabels: 'triage'
+          ignoreIfLabeled: true
+
+      - uses: ./.github/actions/create-workflow-failure-issue
+        id: create-failure-issue
+        if: ${{ failure() }}
         with:
-          action-token: ${{ secrets.GITHUB_TOKEN }}
-          project-url: 'https://github.com/github/docs/projects/1'
-          column-name: 'Triage'
+          token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+
+      - uses: ./.github/actions/slack-alert
+        if: ${{ failure() }}
+        with:
+          slack_token: ${{ secrets.SLACK_DOCS_BOT_TOKEN }}
+          issue_url: ${{ steps.create-failure-issue.outputs.issue_url }}

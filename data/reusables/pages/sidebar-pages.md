@@ -1,4 +1,1 @@
-{% ifversion fpt or ghes > 3.1 %}
-1. In the left sidebar, click **Pages**.
-   ![Page tab in the left-hand sidebar](/assets/images/help/pages/pages-tab.png)
-{% endif %}
+1. In the{% ifversion fpt or ghec %} "Code, planning, and automation"{% elsif ghes %} "Code and automation"{% endif %} section of the sidebar, click **{% octicon "browser" aria-hidden="true" aria-label="browser" %} Pages**.

@@ -1,9 +1,8 @@
 1. To start replication of the datastores, use the `ghe-repl-start` command.
-  ```shell
-  $ ghe-repl-start
-  ```
-    {% warning %}
 
-    **Warning:** `ghe-repl-start` causes a brief outage on the primary server, during which users may see internal server errors. To provide a friendlier message, run `ghe-maintenance -s` on the primary node before running `ghe-repl-start` on the replica node to put the appliance in maintenance mode. Once replication starts, disable maintenance mode with `ghe-maintenance -u`.
+   ```shell
+   ghe-repl-start
+   ```
 
-    {% endwarning %}
+   > [!WARNING]
+   > To ensure uninterrupted service when setting up a new replica, run `ghe-config-apply` between `ghe-repl-setup` and `ghe-repl-start`. This allows the primary server to remain available throughout the replication setup process.

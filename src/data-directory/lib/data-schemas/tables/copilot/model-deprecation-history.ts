@@ -1,0 +1,24 @@
+const modelDeprecationHistorySchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['name', 'retirement_date', 'suggested_alternative'],
+    properties: {
+      name: {
+        type: 'string',
+        lintable: true,
+      },
+      retirement_date: {
+        type: 'string',
+        format: 'date',
+      },
+      suggested_alternative: {
+        type: 'string',
+        lintable: true,
+      },
+    },
+  },
+}
+
+export default modelDeprecationHistorySchema

@@ -1,0 +1,65 @@
+name: 'Lint entire content and data markdown files'
+
+# Run the content linter across all content and data Markdown so recurring issues get
+# reported to the Docs content team.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 16 * * 1'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lint-entire-content-data:
+    name: Lint entire content and data directories
+    if: github.repository == 'github/docs-internal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that gh CLI is installed
+        run: gh --version
+
+      - name: Check out repo's default branch
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Node and dependencies
+        uses: ./.github/actions/node-npm-setup
+
+      - name: Run content linter
+        id: linting-content-data
+        timeout-minutes: 10
+        continue-on-error: true
+        run: npm run lint-content -- --paths content data --output-file /tmp/lint-results.json
+
+      - name: Open issue in docs-content
+        if: ${{ always() && steps.linting-content-data.outcome != 'skipped' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
+          REPORT_AUTHOR: docs-bot
+          REPORT_LABEL: broken content markdown report
+          REPORT_REPOSITORY: github/docs-content
+          LINT_OUTCOME: ${{ steps.linting-content-data.outcome }}
+        # The linter exits 0 with warnings only, and writes no results file when the content is clean.
+        run: |
+          if [ -f /tmp/lint-results.json ]; then
+            npm run lint-report -- --path /tmp/lint-results.json
+          elif [ "$LINT_OUTCOME" != success ]; then
+            echo "Content linter failed without writing /tmp/lint-results.json"
+            exit 1
+          else
+            echo "No lint results to report"
+          fi
+
+      - uses: ./.github/actions/create-workflow-failure-issue
+        id: create-failure-issue
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+        with:
+          token: ${{ secrets.DOCS_BOT_PAT_BASE }}
+
+      - uses: ./.github/actions/slack-alert
+        if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+        with:
+          slack_token: ${{ secrets.SLACK_DOCS_BOT_TOKEN }}
+          issue_url: ${{ steps.create-failure-issue.outputs.issue_url }}

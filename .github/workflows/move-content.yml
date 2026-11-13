@@ -1,0 +1,86 @@
+name: Move content script test
+
+# This workflow protects npm run move-content from regressions.
+
+on:
+  pull_request:
+    paths:
+      - src/content-render/scripts/move-content.ts
+      - src/content-render/scripts/test-moved-content.ts
+      - 'src/frame/lib/**/*.ts'
+      - .github/workflows/move-content.yml
+      # Dependency changes can break the move-content script.
+      - 'package*.json'
+      - 'src/fixtures/fixtures/content/get-started/**'
+      - 'src/fixtures/fixtures/content/code-security/**'
+
+permissions:
+  contents: read
+
+jobs:
+  move-content-test:
+    if: github.repository == 'github/docs-internal' || github.repository == 'github/docs'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: ./.github/actions/node-npm-setup
+
+      - name: Set up a dummy git user
+        run: |
+          # move-content runs git mv and git commit, so Git needs an identity.
+          git config --global user.name "docs-bot"
+          git config --global user.email "77750099+docs-bot@users.noreply.github.com"
+
+      - name: Move hello-world.md to hello-wurld.md
+        env:
+          ROOT: src/fixtures/fixtures
+        run: |
+          npm run move-content -- \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-world.md \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-wurld.md
+
+          npm run test-moved-content -- \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-world.md \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-wurld.md
+          git log | head -n 100
+
+      - name: Undo moving hello-world.md to hello-wurld.md
+        env:
+          ROOT: src/fixtures/fixtures
+        run: |
+          # The fixtures start with hello-world, so confirm the move rewrote them before testing undo.
+          for file in src/fixtures/fixtures/content/index.md src/fixtures/fixtures/content/get-started/index.md; do
+            grep -q -- '- /get-started/start-your-journey/hello-wurld$' "$file"
+          done
+
+          npm run move-content -- --undo \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-world.md \
+            src/fixtures/fixtures/content/get-started/start-your-journey/hello-wurld.md
+
+          test -f src/fixtures/fixtures/content/get-started/start-your-journey/hello-world.md
+          test ! -e src/fixtures/fixtures/content/get-started/start-your-journey/hello-wurld.md
+          # Undo must revert featuredLinks too, or they point at a page that no longer exists.
+          for file in src/fixtures/fixtures/content/index.md src/fixtures/fixtures/content/get-started/index.md; do
+            grep -q -- '- /get-started/start-your-journey/hello-world$' "$file"
+            if grep -q hello-wurld "$file"; then
+              echo "$file still links to hello-wurld"
+              exit 1
+            fi
+          done
+          git log | head -n 100
+
+      - name: Move code-security/getting-started to code-security/got-started
+        env:
+          ROOT: src/fixtures/fixtures
+        run: |
+          # The trailing slash on the old path matches what shell tab completion adds.
+          npm run move-content -- \
+            src/fixtures/fixtures/content/code-security/getting-started/ \
+            src/fixtures/fixtures/content/code-security/got-started
+
+          npm run test-moved-content -- \
+            src/fixtures/fixtures/content/code-security/getting-started \
+            src/fixtures/fixtures/content/code-security/got-started
+          git log | head -n 100

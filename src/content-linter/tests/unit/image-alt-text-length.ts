@@ -1,0 +1,58 @@
+import { describe, expect, test } from 'vitest'
+
+import { runRule } from '../../lib/init-test'
+import { incorrectAltTextLength } from '../../lib/linting-rules/image-alt-text-length'
+import type { Rule } from '../../types'
+
+describe(incorrectAltTextLength.names.join(' - '), () => {
+  test('image with incorrect alt text length fails', async () => {
+    const markdown = [
+      `![${'x'.repeat(39)}](./image.png)`,
+      `![${'x'.repeat(151)}](./image.png)`,
+    ].join('\n')
+    const result = await runRule(incorrectAltTextLength as Rule, { strings: { markdown } })
+    const errors = result.markdown
+    expect(errors.length).toBe(2)
+    expect(errors[0].lineNumber).toBe(1)
+    expect(errors[1].lineNumber).toBe(2)
+    expect(errors[0].errorRange).toEqual([3, 39])
+    expect(errors[1].errorRange).toEqual([3, 151])
+  })
+  test('image with correct length alt test passes', async () => {
+    const markdown = [
+      `![${'x'.repeat(40)}](./image.png)`,
+      `![${'x'.repeat(150)}](./image.png)`,
+    ].join('\n')
+    const result = await runRule(incorrectAltTextLength as Rule, { strings: { markdown } })
+    const errors = result.markdown
+    expect(errors.length).toBe(0)
+  })
+  test('image alt text that is entirely empty', async () => {
+    const markdown = [
+      '# Heading',
+      '',
+      // Empty alt text has no valid range.
+      '![](/images/this-is-ok.png)',
+    ].join('\n')
+    const result = await runRule(incorrectAltTextLength as Rule, { strings: { markdown } })
+    const errors = result.markdown
+    expect(errors.length).toBe(1)
+    expect(errors[0].lineNumber).toBe(3)
+    expect(errors[0].errorRange).toEqual(null)
+  })
+  test('image alt text with Liquid is checked after rendering', async () => {
+    const markdown = '![{% data variables.product.prodname_copilot_short %} icon.](./image.png)'
+    const result = await runRule(incorrectAltTextLength as Rule, { strings: { markdown } })
+    const errors = result.markdown
+    expect(errors.length).toBe(1)
+    expect(errors[0].lineNumber).toBe(1)
+    expect(errors[0].errorDetail).toBe('Image alternate text is 13 characters long.')
+  })
+  test('image alt text with a Liquid render error does not throw', async () => {
+    const markdown =
+      '![Screenshot of {% data variables.product.prodname_doesnotexist %} in the editor sidebar panel.](./image.png)'
+    const result = await runRule(incorrectAltTextLength as Rule, { strings: { markdown } })
+    const errors = result.markdown
+    expect(errors.length).toBe(0)
+  })
+})

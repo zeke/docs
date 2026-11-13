@@ -1,0 +1,127 @@
+name: Add engineering PRs to review board
+
+# Routes non-draft engineering PRs to the Docs & Blog Engineering PR Reviews board for triage.
+# Labels each PR, so later pushes skip board work unless the PR reopens.
+
+on:
+  pull_request:
+    types:
+      - edited
+      - opened
+      - ready_for_review
+      - reopened
+      - synchronize
+    paths:
+      - '**.ts'
+      - '**.tsx'
+      - '**.scss'
+      - 'src/**'
+      - '!src/**.json' # Skip automated pipeline data PRs.
+      - '!src/**.yml' # Skip automated pipeline data PRs.
+      - '!src/**.sha' # Skip automated pipeline data PRs.
+      - '.github/**'
+      - 'config/**'
+      - '.devcontainer/**'
+      - '**Dockerfile'
+      - '.dockerignore'
+      - 'package*.json'
+      - .github/workflows/reviewers-docs-engineering.yml
+
+permissions:
+  contents: read
+  pull-requests: write
+  repository-projects: read
+
+jobs:
+  reviewers-docs-engineering:
+    if: >-
+      ${{ github.repository == 'github/docs-internal' &&
+          !github.event.pull_request.draft &&
+          (github.event.action == 'reopened' ||
+          !contains(github.event.pull_request.labels.*.name, 'reviewers-docs-engineering')) &&
+          !contains(github.event.pull_request.labels.*.name, 'lockfile-churn-only') &&
+          github.event.pull_request.head.ref != 'repo-sync' }}
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.html_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # Detect PRs that only change package-lock.json. Contributors often create
+      # cross-platform npm install churn while editing content.
+      # Comment with reset instructions instead of adding them to the engineering review board.
+      # Dependabot and docs-bot PRs can change only the lockfile on purpose, for example
+      # to fix a transitive dependency. Skip the check for them so they still get engineering triage.
+      - name: Detect lockfile-only churn
+        id: detect
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+          REPO: ${{ github.repository }}
+          EVENT_ACTION: ${{ github.event.action }}
+        run: |
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ] || [ "$PR_AUTHOR" = "docs-bot" ]; then
+            echo "Author is $PR_AUTHOR; skipping lockfile churn detection."
+            echo "lockfile_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Removing the lockfile-churn-only label and reopening the PR is the documented override.
+          if [ "$EVENT_ACTION" = "reopened" ]; then
+            echo "PR reopened; skipping lockfile churn detection."
+            echo "lockfile_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # `gh pr diff` fails above 300 files, and `gh pr view --json files` stops at 100.
+          changed=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')
+          echo "Changed files:"
+          echo "$changed"
+          # The files API returns at most 3,000 files. If the list is incomplete, request review anyway.
+          if [ "$(echo "$changed" | grep -c .)" -lt "$CHANGED_FILES" ]; then
+            echo "Listed fewer files than the PR changes; skipping lockfile churn detection."
+            echo "lockfile_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          lockfile=$(echo "$changed" | grep -c '^package-lock\.json$' || true)
+          other_eng=$(echo "$changed" | grep -cE '(\.tsx?$|\.scss$|^src/|^package\.json$|^\.github/|^config/|^\.devcontainer/|Dockerfile|^\.dockerignore$)' || true)
+          if [ "$lockfile" -gt 0 ] && [ "$other_eng" -eq 0 ]; then
+            echo "lockfile_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lockfile_only=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment and label lockfile-only PRs
+        if: steps.detect.outputs.lockfile_only == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
+        run: |
+          cat > /tmp/lockfile-churn-body.md <<'EOF'
+          _Posted by Copilot on behalf of docs-engineering._
+
+          This PR includes `package-lock.json` changes but no engineering files. Please reset the lockfile:
+
+          ```
+          git checkout origin/main -- package-lock.json
+          git commit -m "Reset package-lock.json"
+          git push
+          ```
+
+          If the lockfile change is intentional, remove the `lockfile-churn-only` label, then close and reopen the PR so this workflow sends it to the engineering review board.
+          EOF
+          gh pr comment "$PR" --body-file /tmp/lockfile-churn-body.md
+          gh pr edit "$PR" --add-label lockfile-churn-only
+
+      - name: Add PR to board and label
+        if: steps.detect.outputs.lockfile_only != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_BOT_PAT_BASE }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        uses: ./.github/actions/retry-command
+        with:
+          command: >-
+            gh project item-add 25672 --owner github --url "$PR" &&
+            gh api "repos/$REPO/issues/$PR_NUMBER/labels" -f 'labels[]=reviewers-docs-engineering' --silent

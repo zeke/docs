@@ -1,0 +1,1 @@
+{% data variables.product.prodname_secret_scanning_caps %} is a security tool that scans the entire Git history of repositories, as well as issues, pull requests, discussions, and wikis in those repositories, for leaked secrets that have been accidentally committed, such as tokens or private keys.

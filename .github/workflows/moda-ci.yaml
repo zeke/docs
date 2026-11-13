@@ -1,0 +1,110 @@
+name: docs-internal Moda CI
+
+# Moda CI follows this CI Actions setup:
+# https://github.com/github/ops/blob/master/docs/playbooks/build-systems/moving-moda-apps-from-bp-to-actions.md
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'gh-readonly-queue/**'
+  merge_group:
+    types: [checks_requested]
+
+permissions: {}
+
+jobs:
+  set-vault-keys:
+    # Merge queue already built and checked this SHA. Repo-sync and admin merges bypass the queue and still build.
+    # The actor check only skips a duplicate build and grants no access.
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'github-merge-queue[bot]') }} # zizmor: ignore[bot-conditions]
+    permissions: {}
+    runs-on: ubuntu-latest
+    outputs:
+      modified_vault_keys: ${{ steps.modify_vault_keys.outputs.modified }}
+    steps:
+      - name: Set vault-keys output
+        id: modify_vault_keys
+        env:
+          VAULT_KEYS: ${{ vars.VAULT_KEYS }}
+        run: |
+          if [ -z "$VAULT_KEYS" ]; then
+            # Add DOCS_BOT_PAT_BASE so builds using --environment ci
+            # fetch it from the docs-internal Vault.
+            echo "modified=DOCS_BOT_PAT_BASE" >> "$GITHUB_OUTPUT"
+          else
+            echo "modified=${VAULT_KEYS},DOCS_BOT_PAT_BASE" >> "$GITHUB_OUTPUT"
+          fi
+
+  moda-config-bundle:
+    if: ${{ github.repository == 'github/docs-internal' }}
+    name: ${{ matrix.ci_job.job }}
+    needs: set-vault-keys
+    permissions:
+      actions: read
+      attestations: write
+      checks: read
+      contents: read
+      id-token: write
+      statuses: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_job: [{ 'job': 'docs-internal-moda-config-bundle' }]
+    uses: github/internal-actions/.github/workflows/moda.yml@main
+    with:
+      ci-formatted-job-name: ${{ matrix.ci_job.job }}
+      vault-keys: ${{ needs.set-vault-keys.outputs.modified_vault_keys }}
+    secrets:
+      dx-bot-token: ${{ secrets.INTERNAL_ACTIONS_DX_BOT_ACCOUNT_TOKEN }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+
+  docker-image:
+    if: ${{ github.repository == 'github/docs-internal' }}
+    name: ${{ matrix.ci_job.job }}
+    needs: set-vault-keys
+    permissions:
+      actions: read
+      attestations: write
+      checks: read
+      contents: read
+      id-token: write
+      statuses: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_job: [{ 'job': 'docs-internal-docker-image' }]
+    uses: github/internal-actions/.github/workflows/kube.yml@main
+    with:
+      ci-formatted-job-name: ${{ matrix.ci_job.job }}
+      vault-keys: ${{ needs.set-vault-keys.outputs.modified_vault_keys }}
+      # docker-build-env-secrets passes DOCS_BOT_PAT_BASE from Vault as a Docker build secret.
+      attest: true
+      docker-build-env-secrets: 'DOCS_BOT_PAT_BASE'
+    secrets:
+      dx-bot-token: ${{ secrets.INTERNAL_ACTIONS_DX_BOT_ACCOUNT_TOKEN }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}
+
+  docker-security:
+    if: ${{ github.repository == 'github/docs-internal' }}
+    name: ${{ matrix.ci_job.job }}
+    needs: set-vault-keys
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      id-token: write
+      statuses: read
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_job: [{ 'job': 'docs-internal-docker-security' }]
+    uses: github/internal-actions/.github/workflows/docker_security.yml@main
+    with:
+      ci-formatted-job-name: ${{ matrix.ci_job.job }}
+      vault-keys: ${{ needs.set-vault-keys.outputs.modified_vault_keys }}
+      # docker-build-env-secrets passes DOCS_BOT_PAT_BASE from Vault as a Docker build secret.
+      docker-build-env-secrets: 'DOCS_BOT_PAT_BASE'
+    secrets:
+      dx-bot-token: ${{ secrets.INTERNAL_ACTIONS_DX_BOT_ACCOUNT_TOKEN }}
+      datadog-api-key: ${{ secrets.DATADOG_API_KEY }}

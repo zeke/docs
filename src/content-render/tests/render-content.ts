@@ -1,0 +1,385 @@
+import { load } from 'cheerio'
+import { describe, expect, test } from 'vitest'
+
+import { renderContent } from '@/content-render/index'
+import { EOL } from 'os'
+
+// Disk-loaded templates use platform line endings, so tests do too.
+const nl = (str: string): string => str.replace(/\n/g, EOL)
+
+describe('renderContent', () => {
+  test('takes a template and a context and returns a string (async)', async () => {
+    const template = 'my favorite color is {{ color }}.'
+    const context = { color: 'orange' }
+    const output = await renderContent(template, context)
+    expect(output, '<p>my favorite color is orange.</p>')
+  })
+
+  test('preserves content within {% raw %} tags', async () => {
+    const template = nl('For example: {% raw %}{% include cool_header.html %}{% endraw %}.')
+    const expected = '<p>For example: {% include cool_header.html %}.</p>'
+    const output = await renderContent(template)
+    expect(output).toBe(expected)
+  })
+
+  test('removes extra newlines to prevent lists from breaking', async () => {
+    const template = nl(`
+1. item one
+1. item two
+
+
+1. item three`)
+
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect($('ol').length).toBe(1)
+    expect($('ol > li').length).toBe(3)
+  })
+
+  test('removes extra newlines from lists of links', async () => {
+    const template = nl(`- <a>item</a>
+
+- <a>item</a>`)
+
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect($('ul p').length).toBe(0)
+  })
+
+  test('renders text only', async () => {
+    const template = 'my favorite color is {{ color }}.'
+    const context = { color: 'orange' }
+    const output = await renderContent(template, context, { textOnly: true })
+    expect(output, 'my favorite color is orange.')
+  })
+
+  test('renders empty templates', async () => {
+    const template = ''
+    const context = {}
+    const output = await renderContent(template, context)
+    expect(output).toBe('')
+  })
+
+  test('does not render newlines around links in tables', async () => {
+    const template = nl(`
+| Keyboard shortcut | Description
+|-----------|------------
+|<kbd>g</kbd> <kbd>c</kbd> | Go to the **Code** tab
+|<kbd>g</kbd> <kbd>i</kbd> | Go to the **Issues** tab. For more information, see "[About issues](/articles/about-issues)."
+    `)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect(
+      $.html().includes('&quot;<a href="/articles/about-issues">About issues</a>.&quot;'),
+    ).toBeTruthy()
+  })
+
+  test('does not render newlines around inline code in tables', async () => {
+    const template = nl(`
+| Package manager | formats |
+| --- | --- |
+| Python | \`requirements.txt\`, \`pipfile.lock\`
+    `)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect(
+      $.html().includes('<code>requirements.txt</code>, <code>pipfile.lock</code>'),
+    ).toBeTruthy()
+  })
+
+  test('does not render newlines around emphasis in code', async () => {
+    const template = nl(`
+| Qualifier        | Example
+| ------------- | -------------
+| <code>user:<em>USERNAME</em></code> | [**user:defunkt ubuntu**](https://github.com/search?q=user%3Adefunkt+ubuntu&type=Issues) matches issues with the word "ubuntu" from repositories owned by @defunkt.
+    `)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect($.html().includes('<code>user:<em>USERNAME</em></code>')).toBeTruthy()
+  })
+
+  test('renders code blocks with # comments', async () => {
+    const template = nl(`
+1. This is a list item with code containing a comment:
+
+   \`\`\`shell
+   $ foo the bar
+   # some comment here
+   \`\`\`
+1. This is another list item.
+    `)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect($('ol').length).toBe(1)
+    expect($.html().includes('<span class="hljs-meta prompt_"># </span')).toBeTruthy()
+    expect($.html().includes('some comment here')).toBeTruthy()
+    expect($.html().includes('<h1 id="some-comment-here">')).toBeFalsy()
+    expect($.html().includes('<a href="#some-comment-here">')).toBeFalsy()
+  })
+
+  test('renders headings at the right level', async () => {
+    const template = nl(`
+# This is a level 1
+
+## This is a level 2
+
+### This is a level 3
+
+#### This is a level 4
+
+##### This is a level 5
+`)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+
+    for (const level of [1, 2, 3, 4, 5]) {
+      expect(
+        $(`h${level}#this-is-a-level-${level} a[href="#this-is-a-level-${level}"]`).length,
+      ).toBe(1)
+    }
+  })
+
+  test('gives repeated translated headings suffixed English IDs', async () => {
+    const template = nl(`
+## Uno
+
+### プロンプトの例
+
+## Dos
+
+### プロンプトの例
+
+## Extra
+
+## Extra
+`)
+    const englishHeadings = { Uno: 'One', プロンプトの例: 'Example prompts', Dos: 'Two' }
+    for (let i = 0; i < 2; i++) {
+      const html = await renderContent(template, { englishHeadings })
+      const $ = load(html)
+      const ids = (tag: string) => Array.from($(tag), (el) => $(el).attr('id'))
+      expect(ids('h2')).toEqual(['one', 'two', 'extra', 'extra-1'])
+      expect(ids('h3')).toEqual(['example-prompts', 'example-prompts-1'])
+    }
+  })
+
+  test('does syntax highlighting', async () => {
+    let template = nl(`
+\`\`\`js
+const example = true
+\`\`\`\`
+    `)
+    let html = await renderContent(template)
+    let $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-js">')).toBeTruthy()
+    expect($.html().includes('<span class="hljs-keyword">const</span>')).toBeTruthy()
+
+    template = nl(`
+\`\`\`erb
+<% @articles.each do |article| %>
+\`\`\`\`
+    `)
+    html = await renderContent(template)
+    $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-erb">')).toBeTruthy()
+    expect($.html().includes('<span class="hljs-variable">@articles</span>')).toBeTruthy()
+
+    template = nl(`
+\`\`\`http
+POST / HTTP/2
+\`\`\`\`
+    `)
+    html = await renderContent(template)
+    $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-http">')).toBeTruthy()
+    expect($.html().includes('<span class="hljs-keyword">POST</span>')).toBeTruthy()
+
+    template = nl(`
+\`\`\`groovy
+plugins {
+  ...
+  id 'maven-publish'
+}
+\`\`\`\`
+    `)
+    html = await renderContent(template)
+    $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-groovy">')).toBeTruthy()
+    expect(
+      $.html().includes('<span class="hljs-string">&apos;maven-publish&apos;</span>'),
+    ).toBeTruthy()
+
+    template = nl(`
+\`\`\`Dockerfile
+FROM alpine:3.10
+\`\`\`\`
+    `)
+    html = await renderContent(template)
+    $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-Dockerfile">')).toBeTruthy()
+    expect($.html().includes('<span class="hljs-keyword">FROM</span>')).toBeTruthy()
+
+    template = nl(`
+\`\`\`Powershell
+$resourceGroupName = "octocat-testgroup"
+\`\`\`\`
+    `)
+    html = await renderContent(template)
+    $ = load(html, { xmlMode: true })
+    expect($.html().includes('<pre><code class="hljs language-Powershell">')).toBeTruthy()
+    expect(
+      $.html().includes('<span class="hljs-variable">&#x24;resourceGroupName</span>'),
+    ).toBeTruthy()
+  })
+
+  test('does not autoguess code block language', async () => {
+    const template = nl(`
+\`\`\`
+var a = 1
+\`\`\`
+    `)
+    const html = await renderContent(template)
+    const $ = load(html, { xmlMode: true })
+    expect($.html().includes('var a = 1')).toBeTruthy()
+  })
+
+  test('renders a line break in a table', async () => {
+    const content = `| Webhook event payload | Activity types |
+| --------------------- | -------------- |
+| [\`issues\`](/webhooks/event-payloads/#issues) | - \`opened\`<br/>- \`edited\`<br/>- \`other\` |`
+    const file = await renderContent(content)
+    expect(file).toBe(
+      '<table><thead><tr><th scope="col">Webhook event payload</th><th scope="col">Activity types</th></tr></thead>' +
+        '<tbody><tr><td><a href="/webhooks/event-payloads/#issues"><code>issues</code></a></td><td>- <code>opened</code><br>- <code>edited</code><br>- <code>other</code></td></tr></tbody></table>',
+    )
+  })
+
+  test('renders a copy button for code blocks with language specified', async () => {
+    const template = nl(`
+\`\`\`javascript copy
+var a = 1
+\`\`\`
+    `)
+    const html = await renderContent(template)
+    const $ = load(html)
+    const el = $('button.js-btn-copy')
+    // Copy buttons use a murmurhash ID that matches the paired pre element.
+    expect(el.data('clipboard')).toBe(2967273189)
+  })
+
+  describe('wrap-code-terms (<wbr> in table code)', () => {
+    const table = (term: string) =>
+      nl(`
+| Term | Description |
+| --- | --- |
+| \`${term}\` | a long code term |
+`)
+
+    test('breaks camelCase code terms in tables', async () => {
+      const html = await renderContent(table('hasOrganizationProjects'))
+      const code = load(html)('td code').first()
+      expect(code.html()).toBe('has<wbr>Organization<wbr>Projects')
+    })
+
+    test('breaks long underscore code terms after the 12th character', async () => {
+      const html = await renderContent(table('has_organization_projects_enabled'))
+      const code = load(html)('td code').first()
+      expect(code.html()).toBe('has_organization_<wbr>projects_enabled')
+    })
+
+    test('breaks code terms separated by slashes', async () => {
+      const html = await renderContent(table('actions/checkout/setup-node'))
+      const code = load(html)('td code').first()
+      expect(code.html()).toBe('actions/<wbr>checkout/<wbr>setup-node')
+    })
+
+    test('leaves short code terms untouched', async () => {
+      const html = await renderContent(table('shortTerm'))
+      const code = load(html)('td code').first()
+      expect(code.html()).toBe('shortTerm')
+    })
+
+    test('does not insert <wbr> into code outside of tables', async () => {
+      const html = await renderContent(nl('Inline `hasOrganizationProjects` term.'))
+      expect(html).not.toContain('<wbr>')
+    })
+
+    test('breaks a code term whose text lives inside a child anchor', async () => {
+      const html = await renderContent(
+        nl(`
+| Term | Description |
+| --- | --- |
+| [\`hasOrganizationProjects\`](/foo) | a long code term |
+`),
+      )
+      const $ = load(html)
+      expect($('td a').attr('href')).toBe('/foo')
+      expect($('td a code').html()).toBe('has<wbr>Organization<wbr>Projects')
+    })
+  })
+
+  test('renders alerts with data-container attribute for analytics', async () => {
+    const template = nl(`
+> [!NOTE]
+> This is a note with a [link](https://example.com)
+    `)
+    const html = await renderContent(template, { alertTitles: { NOTE: 'Note' } })
+    const $ = load(html)
+    const alertEl = $('.ghd-alert')
+    expect(alertEl.length).toBe(1)
+    expect(alertEl.attr('data-container')).toBe('alert')
+    expect(alertEl.hasClass('ghd-alert-accent')).toBe(true)
+    expect(alertEl.find('a[href="https://example.com"]').length).toBe(1)
+  })
+
+  test('renders alert titles for mixed-case alert markers', async () => {
+    const alertTitles = { NOTE: 'Note', TIP: 'Tip' }
+    const tipHtml = await renderContent(nl('> [!Tip]\n> Body'), { alertTitles })
+    const $tip = load(tipHtml)
+    expect($tip('.ghd-alert').hasClass('ghd-alert-success')).toBe(true)
+    expect($tip('.ghd-alert-title').text()).toBe('Tip')
+
+    const noteHtml = await renderContent(nl('> [!Note]\n> Body'), { alertTitles })
+    const $note = load(noteHtml)
+    expect($note('.ghd-alert').hasClass('ghd-alert-accent')).toBe(true)
+    expect($note('.ghd-alert-title').text()).toBe('Note')
+  })
+
+  describe('markdownRequested output', () => {
+    const markdownContext = {
+      markdownRequested: true,
+      currentLanguage: 'en',
+      currentVersion: 'free-pro-team@latest',
+      pages: {},
+      redirects: {},
+    }
+
+    test('keeps alert markers unescaped when rewriting internal links', async () => {
+      const template = nl(`> [!NOTE]
+> See [Billing](/billing/foo).
+
+> [!WARNING]
+> Careful.`)
+      const markdown = await renderContent(template, markdownContext)
+      expect(markdown).toContain('> [!NOTE]')
+      expect(markdown).toContain('> [!WARNING]')
+      expect(markdown).not.toContain('\\[!')
+      expect(markdown).toContain('(/en/billing/foo)')
+    })
+
+    test('keeps escaping alert-like text outside the start of a blockquote', async () => {
+      const template = 'Type \\[!NOTE] to start an alert. See [Billing](/billing/foo).'
+      const markdown = await renderContent(template, markdownContext)
+      expect(markdown).toContain('Type \\[!NOTE] to start an alert.')
+      expect(markdown).toContain('(/en/billing/foo)')
+    })
+
+    test('keeps an escaped alert marker escaped at the start of a blockquote', async () => {
+      const template = nl(`> \\[!NOTE]
+> See [Billing](/billing/foo).`)
+      const markdown = await renderContent(template, markdownContext)
+      expect(markdown).toContain('> \\[!NOTE]')
+      expect(markdown).toContain('(/en/billing/foo)')
+    })
+  })
+})

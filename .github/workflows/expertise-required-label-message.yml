@@ -1,0 +1,23 @@
+name: Expertise Required label message
+
+# Surface contributor expertise requirements directly on labeled github/docs issues.
+
+on:
+  issues:
+    types:
+      - labeled
+
+jobs:
+  job:
+    name: Comment on issue with expertise required message
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    if: github.event.label.name == 'contributor-expertise-required' && github.repository == 'github/docs'
+    steps:
+      - name: Comment on issue
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          issue: ${{ github.event.issue.html_url }}
+        run: |
+          gh issue comment $issue --body 'Addressing this issue will require additional expertise from the contributor. Please make sure to review the issue carefully before opening a PR and ask any questions you might have in the issue.'

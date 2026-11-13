@@ -1,0 +1,2 @@
+* If you get {% data variables.product.prodname_copilot_short %} through an organization or enterprise, including an {% data variables.enterprise.prodname_emu_enterprise %}, the {% data variables.copilot.copilot_cloud_agent %} policy is enabled by default, but an owner can turn it off. {% data variables.product.prodname_copilot_short %} runs your Teams sessions in a cloud sandbox, which doesn't need a separate setting. See [AUTOTITLE](/copilot/how-tos/cloud-and-local-sandboxes/enabling-or-disabling-cloud-sandboxes-for-your-organization).
+
